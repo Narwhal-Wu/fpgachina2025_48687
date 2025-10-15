@@ -160,7 +160,7 @@ end
 
 //更新pc的逻辑
 always @(*) begin
-    if(RES) pc_next=32'h8000_0004;
+    if(!RES) pc_next=32'h0000_0004;
     else pc_next = branch_taken ? branch_target : Load_bubble ? PC : PC + 4;
 end
 

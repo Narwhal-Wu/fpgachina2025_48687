@@ -66,7 +66,7 @@ module TOP_tb;
         CPU_RESETN = 1'b1;
 
         // Simple stimulus placeholder
-        #1000;
+        #10000;
         $finish;
     end
 endmodule

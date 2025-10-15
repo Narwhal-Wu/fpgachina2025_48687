@@ -53,7 +53,7 @@
 //  Output     Output      Phase    Duty Cycle   Pk-to-Pk     Phase
 //   Clock     Freq (MHz)  (degrees)    (%)     Jitter (ps)  Error (ps)
 //----------------------------------------------------------------------------
-// clk_out1__50.00000______0.000______50.0______203.457____155.540
+// clk_out1__100.00000______0.000______50.0______137.681____105.461
 //
 //----------------------------------------------------------------------------
 // Input Clock   Freq (MHz)    Input Jitter (UI)
@@ -114,18 +114,15 @@ wire clk_in2_clk_wiz_0;
   wire        clkfbstopped_unused;
   wire        clkinstopped_unused;
   wire        reset_high;
-  (* KEEP = "TRUE" *) 
-  (* ASYNC_REG = "TRUE" *)
-  reg  [7 :0] seq_reg1 = 0;
 
   PLLE2_ADV
   #(.BANDWIDTH            ("OPTIMIZED"),
     .COMPENSATION         ("ZHOLD"),
     .STARTUP_WAIT         ("FALSE"),
-    .DIVCLK_DIVIDE        (2),
-    .CLKFBOUT_MULT        (17),
+    .DIVCLK_DIVIDE        (1),
+    .CLKFBOUT_MULT        (9),
     .CLKFBOUT_PHASE       (0.000),
-    .CLKOUT0_DIVIDE       (17),
+    .CLKOUT0_DIVIDE       (9),
     .CLKOUT0_PHASE        (0.000),
     .CLKOUT0_DUTY_CYCLE   (0.500),
     .CLKIN1_PERIOD        (10.000))
@@ -174,25 +171,9 @@ wire clk_in2_clk_wiz_0;
 
 
 
-
-  BUFGCE clkout1_buf
+  BUFG clkout1_buf
    (.O   (clk_out1),
-    .CE  (seq_reg1[7]),
     .I   (clk_out1_clk_wiz_0));
-
-  BUFH clkout1_buf_en
-   (.O   (clk_out1_clk_wiz_0_en_clk),
-    .I   (clk_out1_clk_wiz_0));
-  always @(posedge clk_out1_clk_wiz_0_en_clk or posedge reset_high) begin
-    if(reset_high == 1'b1) begin
-	    seq_reg1 <= 8'h00;
-    end
-    else begin
-        seq_reg1 <= {seq_reg1[6:0],locked_int};
-  
-    end
-  end
-
 
 
 
