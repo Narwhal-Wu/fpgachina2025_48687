@@ -82,11 +82,24 @@ wire valid_trans = RES && !branch_taken && !Load_bubble;
 // HTRANS信号生成
 assign HTRANS_I = (valid_trans) ? `HTRANS_NONSEQ : `HTRANS_IDLE;
 
+// trmporary fix for HWDATA_I
+  reg [31:0] HWDATA_I_reg;
+  reg last_bubble; //used to active HWDATA_I_reg to deal with the bubble
+
+  always @(posedge CLK or negedge RES) begin
+      if(!RES) begin
+          HWDATA_I_reg <= 32'b0;
+      end else begin
+          HWDATA_I_reg <= HRDATA_I;
+      end
+  end
+// trmporary fix for HWDATA_I
 always @(posedge CLK) begin
     if (!RES) begin          // 当产生复位信号时，刷新所有pc和指令
         pc           <= 32'd0;
         if_id_pc     <= 32'd0;
         if_id_inst   <= 32'd0;
+        last_bubble  <= 1'b0;
     end 
     else begin              // 每一个周期更新当前fetch阶段的pc和decode阶段的pc
         if_id_pc <= PC;     // 当有跳转信号时，进行流水线的冲刷，否则fetch阶段正常取值
@@ -100,11 +113,17 @@ always @(posedge CLK) begin
             end else if (Load_bubble) begin
                 // 加载气泡时，保持PC，指令置为气泡
                 if_id_inst <= 32'd0;
+                last_bubble <= 1'b1;
+            end else if (last_bubble) begin
+                // 处理上一个周期的气泡，保持PC，指令更新为上一个周期的读数据
+                if_id_inst <= HWDATA_I_reg;
+                last_bubble <= 1'b0;
             end else if (valid_trans) begin
                 // 正常指令获取
                 pc <= PC_next;
                 if_id_inst <= HRDATA_I;
-            end else begin
+            end 
+            else begin
                 // 无有效请求，保持当前状态
                 if_id_inst <= if_id_inst;
             end

@@ -26,10 +26,10 @@ module TOP(
     
     // 按键输入
     input  wire        BTNC,      // 中间按键
-    input  wire        BTNU,      // 上按�?
-    input  wire        BTND,      // 下按�?
-    input  wire        BTNL,      // 左按�?
-    input  wire        BTNR,      // 右按�?
+    input  wire        BTNU,      // 上按�?
+    input  wire        BTND,      // 下按�?
+    input  wire        BTNL,      // 左按�?
+    input  wire        BTNR,      // 右按�?
     
     // LED输出
     output wire [15:0] LED,
@@ -49,7 +49,7 @@ module TOP(
 
     // UART接口
     input  wire        UART_RX, // UART接收引脚
-    output wire        UART_TX  // UART发�?�引�?
+    output wire        UART_TX  // UART发�?�引�?
     );
     
     parameter ADDR_WIDTH = 32;
@@ -67,14 +67,14 @@ module TOP(
     wire btnl_press, btnl_state;
     wire btnr_press, btnr_state;
     
-    // LED寄存�?
+    // LED寄存�?
     reg  [15:0] led_reg;
     reg  [5:0]  rgb_reg; // [LED17_R, LED17_G, LED17_B, LED16_R, LED16_G, LED16_B]
     
     assign pll_reset = ~CPU_RESETN;
 
     // ================================
-    // myCPU 实例�?
+    // myCPU 实例�?
     // ================================
 
     // AHB指令接口信号
@@ -105,7 +105,7 @@ module TOP(
 
     myCPU cpu_inst (
         .HCLK(clk_cpu),                // 时钟信号
-        .HRESETn(pll_locked),          // 复位信号（低有效�?
+        .HRESETn(pll_locked),          // 复位信号（低有效�?
 
         // AHB指令接口
         .HRDATA_I(HRDATA_I),
@@ -122,7 +122,7 @@ module TOP(
 
         // AHB数据接口
         .HRDATA_D(HRDATA_D),
-        .HREADY_D(HREADY_D),
+        .HREADY_D(1),
         .HRESP_D(HRESP_D),
         .HADDR_D(HADDR_D),
         .HWDATA_D(HWDATA_D),
@@ -134,7 +134,7 @@ module TOP(
         .HPROT_D(HPROT_D)
     );
 
-    // PLL实例�?
+    // PLL实例�?
     clk_wiz_0 clk_pll (
         .clk_out1(clk_cpu),
         .reset(pll_reset),
@@ -151,7 +151,7 @@ module TOP(
         .key_state(btnc_state)
     );
 
-    // 上按键去�?
+    // 上按键去�?
     key_debounce debounce_btnu (
         .clk(clk_cpu),
         .rst_n(pll_locked),
@@ -160,7 +160,7 @@ module TOP(
         .key_state(btnu_state)
     );
 
-    // 下按键去�?
+    // 下按键去�?
     key_debounce debounce_btnd (
         .clk(clk_cpu),
         .rst_n(pll_locked),
@@ -169,7 +169,7 @@ module TOP(
         .key_state(btnd_state)
     );
 
-    // 左按键去�?
+    // 左按键去�?
     key_debounce debounce_btnl (
         .clk(clk_cpu),
         .rst_n(pll_locked),
@@ -178,7 +178,7 @@ module TOP(
         .key_state(btnl_state)
     );
 
-    // 右按键去�?
+    // 右按键去�?
     key_debounce debounce_btnr (
         .clk(clk_cpu),
         .rst_n(pll_locked),
@@ -208,17 +208,17 @@ module TOP(
                 led_reg <= led_reg - 1;
             end
             
-            // 左按键左�?
+            // 左按键左�?
             if (btnl_press) begin
                 led_reg <= {led_reg[14:0], 1'b0};
             end
             
-            // 右按键右�?
+            // 右按键右�?
             if (btnr_press) begin
                 led_reg <= {1'b0, led_reg[15:1]};
             end
             
-            // 按键状�?�控制RGB LED显示
+            // 按键状�?�控制RGB LED显示
             if (btnu_state) begin
                 rgb_reg <= 6'b111000; // LED17全亮，LED16全灭
             end else if (btnd_state) begin
@@ -238,13 +238,13 @@ module TOP(
     Seven_Seg seven_seg_inst (
         .clk(clk_cpu),
         .reset(~pll_locked), // 使用PLL锁定信号作为复位
-        .data({16'h0000, led_reg}), // 显示LED寄存器的�?16位，可更�?
+        .data({16'h0000, led_reg}), // 显示LED寄存器的�?16位，可更�?
         .anode(anode),
         .cathode(cathode),
         .dp(dp)
     );
 
-    // UART模块实例�?
+    // UART模块实例�?
     wire [7:0] uart_rx_data;
     wire uart_rx_ready;
     reg [7:0] uart_tx_data;
@@ -253,7 +253,7 @@ module TOP(
 
     UART #(
         .CLK_FREQ(100_000_000),  // 时钟频率
-        .BAUD_RATE(9600)         // 波特�?
+        .BAUD_RATE(9600)         // 波特�?
     ) uart_inst (
         .clk(clk_cpu),
         .reset(~pll_locked),
@@ -272,23 +272,23 @@ module TOP(
     // UART接收逻辑
     always @(posedge clk_cpu or negedge pll_locked) begin
         if (!pll_locked) begin
-            display_data <= 32'h00000000; // 初始化显示数�?
+            display_data <= 32'h00000000; // 初始化显示数�?
         end else begin
             if (uart_rx_ready) begin
-                // 将接收到的数据存储到 display_data 的低8位，并左移显�?
+                // 将接收到的数据存储到 display_data 的低8位，并左移显�?
                 display_data <= {display_data[23:0], uart_rx_data};
             end
         end
     end
 
-    // UART发�?��?�辑
+    // UART发�?��?�辑
     always @(posedge clk_cpu or negedge pll_locked) begin
         if (!pll_locked) begin
             uart_tx_data <= 8'h00;
             uart_tx_start <= 1'b0;
         end else begin
             if (btnc_press && !uart_tx_busy) begin
-                uart_tx_data <= 8'h55; // 示例：发送固定数�? 0x55
+                uart_tx_data <= 8'h55; // 示例：发送固定数�? 0x55
                 uart_tx_start <= 1'b1;
             end else begin
                 uart_tx_start <= 1'b0;
@@ -337,7 +337,7 @@ module TOP(
         .HPROT(HPROT_D),
         .HTRANS(HTRANS_D),
         .HMASTLOCK(HMASTLOCK_D),
-        .HREADY(HREADY_D),
+        .HREADY(1),
         .HWDATA(HWDATA_D),
         .HREADYOUT(),
         .HRESP(HRESP_D),

@@ -79,11 +79,19 @@ assign MEM_WB_alu    = mem_wb_alu;
 assign MEM_WB_rd     = mem_wb_rd;
 assign MEM_WB_data   = mem_wb_data;
 assign HADDR_D       = EX_MEM_alu;
-assign HWDATA_D      = EX_MEM_rs2;
+assign HWDATA_D      = EX_MEM_rs2_reg;
 assign HWRITE_D      = EX_MEM_is_store;
 assign HBURST_D      = `HBURST_SINGLE;     // 单次传输
 assign HMASTLOCK_D   = 1'b0;               // 不锁定总线
 assign HPROT_D       = `HPROT_DATA;        // 数据访问，特权模式
+
+// temporary fix for HWDATA_D
+reg [31:0] EX_MEM_rs2_reg;
+
+always @(posedge CLK ) begin
+    EX_MEM_rs2_reg <= EX_MEM_rs2;
+end
+// temporary fix for HWDATA_D
 
 // 传输大小计算
 wire [2:0] data_size = (EX_MEM_is_load || EX_MEM_is_store) ? 
