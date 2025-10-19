@@ -1,0 +1,114 @@
+digraph memory_module {
+    rankdir=LR;
+    bgcolor="white";
+    node [fontname="Arial", fontsize=11];
+    edge [fontname="Arial", fontsize=9];
+    
+    // Title
+    label="访存模块 (Memory Stage)\n负责数据存储器访问和数据对齐";
+    labelloc="t";
+    fontname="Arial Bold";
+    fontsize=14;
+    
+    // Input signals
+    subgraph cluster_inputs {
+        label="输入信号";
+        labelloc="t";
+        style="filled";
+        fillcolor="#f0f8ff";
+        color="#4169e1";
+        penwidth=2;
+        
+        node [shape=ellipse, style="filled", fillcolor="#e6f3ff", 
+              color="#4682b4", penwidth=2, fontsize=10];
+        
+        CLK [label="CLK"];
+        EXMEM_ALU [label="EX_MEM_alu\n地址/数据"];
+        EXMEM_INST [label="EX_MEM_inst\n指令"];
+        EXMEM_RS2 [label="EX_MEM_rs2\nStore数据"];
+        HRDATA [label="HRDATA_D\n读取数据"];
+        HREADY [label="HREADY_D\nAHB就绪"];
+    }
+    
+    // Main module
+    subgraph cluster_module {
+        label="";
+        style="rounded,filled";
+        fillcolor="#f5f0ff";
+        color="#9370db";
+        penwidth=3;
+        
+        node [shape=box, style="rounded,filled"];
+        
+        // Memory control
+        MEM_CTRL [label="访存控制单元\n• Load/Store 识别\n• 字节/半字/字选择\n• 读写控制", 
+                 fillcolor="#dda0dd", color="#9370db", penwidth=2, fontsize=10];
+        
+        // AHB interface
+        AHB_DATA [label="AHB 数据接口\n• 地址对齐\n• 传输控制\n• HSIZE 生成", 
+                 fillcolor="#afeeee", color="#20b2aa", penwidth=2, fontsize=10];
+        
+        // Store data alignment
+        STORE_ALIGN [label="Store 数据对齐\n• 字节对齐\n• 半字对齐\n• 字节使能生成", 
+                    fillcolor="#dda0dd", color="#9370db", penwidth=2, fontsize=10];
+        
+        // Load data alignment
+        LOAD_ALIGN [label="Load 数据对齐\n• 字节扩展 (LB/LBU)\n• 半字扩展 (LH/LHU)\n• 字读取 (LW)", 
+                   fillcolor="#dda0dd", color="#9370db", penwidth=2, fontsize=10];
+        
+        // Pipeline register
+        MEMWB [label="MEM/WB 流水线寄存器\n• Load 数据\n• ALU 结果\n• 写回控制信号", 
+              fillcolor="#ffd700", color="#ff8c00", penwidth=2, fontsize=10];
+    }
+    
+    // Output signals
+    subgraph cluster_outputs {
+        label="输出信号";
+        labelloc="t";
+        style="filled";
+        fillcolor="#f0fff0";
+        color="#228b22";
+        penwidth=2;
+        
+        node [shape=ellipse, style="filled", fillcolor="#e6ffe6", 
+              color="#2e8b57", penwidth=2, fontsize=10];
+        
+        HADDR [label="HADDR_D\n数据地址"];
+        HWDATA [label="HWDATA_D\n写数据"];
+        HWRITE [label="HWRITE_D\n读写控制"];
+        HSIZE [label="HSIZE_D\n传输大小"];
+        HTRANS [label="HTRANS_D\n传输类型"];
+        MEMWB_DATA [label="MEM_WB_data\n写回数据"];
+        MEMWB_RD [label="MEM_WB_rd"];
+    }
+    
+    // Input connections
+    CLK -> MEMWB [label="时钟", color="#ff8c00", penwidth=1.5];
+    EXMEM_ALU -> MEM_CTRL [label="地址", color="#4169e1", penwidth=2];
+    EXMEM_ALU -> AHB_DATA [color="#4169e1", penwidth=2];
+    EXMEM_ALU -> MEMWB [label="ALU结果", color="#4169e1", penwidth=1.5, style="dashed"];
+    
+    EXMEM_INST -> MEM_CTRL [label="funct3", color="#4169e1", penwidth=1.5, style="dashed"];
+    EXMEM_RS2 -> STORE_ALIGN [label="数据", color="#9370db", penwidth=2];
+    
+    HRDATA -> LOAD_ALIGN [label="原始数据", color="#20b2aa", penwidth=2];
+    HREADY -> MEMWB [label="就绪", color="#20b2aa", penwidth=1.5, style="dashed"];
+    
+    // Internal connections
+    MEM_CTRL -> AHB_DATA [label="控制", color="#9370db", penwidth=1.5];
+    MEM_CTRL -> STORE_ALIGN [label="对齐方式", color="#9370db", penwidth=1.5, style="dashed"];
+    MEM_CTRL -> LOAD_ALIGN [label="扩展方式", color="#9370db", penwidth=1.5, style="dashed"];
+    
+    STORE_ALIGN -> AHB_DATA [label="对齐数据", color="#9370db", penwidth=2];
+    LOAD_ALIGN -> MEMWB [label="Load数据", color="#9370db", penwidth=2];
+    
+    // Output connections
+    AHB_DATA -> HADDR [color="#20b2aa", penwidth=2];
+    AHB_DATA -> HWDATA [color="#20b2aa", penwidth=2];
+    AHB_DATA -> HWRITE [color="#20b2aa", penwidth=1.5];
+    AHB_DATA -> HSIZE [color="#20b2aa", penwidth=1.5];
+    AHB_DATA -> HTRANS [color="#20b2aa", penwidth=1.5];
+    
+    MEMWB -> MEMWB_DATA [color="#228b22", penwidth=2];
+    MEMWB -> MEMWB_RD [color="#228b22", penwidth=1.5];
+}

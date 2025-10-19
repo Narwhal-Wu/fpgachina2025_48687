@@ -1,0 +1,119 @@
+digraph execute_module {
+    rankdir=LR;
+    bgcolor="white";
+    node [fontname="Arial", fontsize=11];
+    edge [fontname="Arial", fontsize=9];
+    
+    // Title
+    label="执行模块 (Execute Stage)\n负责 ALU 运算、分支判断和跳转地址计算";
+    labelloc="t";
+    fontname="Arial Bold";
+    fontsize=14;
+    
+    // Input signals
+    subgraph cluster_inputs {
+        label="输入信号";
+        labelloc="t";
+        style="filled";
+        fillcolor="#f0f8ff";
+        color="#4169e1";
+        penwidth=2;
+        
+        node [shape=ellipse, style="filled", fillcolor="#e6f3ff", 
+              color="#4682b4", penwidth=2, fontsize=10];
+        
+        CLK [label="CLK"];
+        IDEX_PC [label="ID_EX_pc"];
+        IDEX_INST [label="ID_EX_inst"];
+        IDEX_RS1 [label="ID_EX_rs1\n操作数1"];
+        IDEX_RS2 [label="ID_EX_rs2\n操作数2"];
+        IDEX_IMM [label="ID_EX_imm\n立即数"];
+    }
+    
+    // Main module
+    subgraph cluster_module {
+        label="";
+        style="rounded,filled";
+        fillcolor="#fff0f0";
+        color="#dc143c";
+        penwidth=3;
+        
+        node [shape=box, style="rounded,filled"];
+        
+        // ALU operand selection
+        ALU_SEL [label="ALU 操作数选择\n• rs1 或 PC\n• rs2 或 imm", 
+                fillcolor="#ffb6c1", color="#dc143c", penwidth=2, fontsize=10];
+        
+        // ALU
+        ALU [label="算术逻辑单元 (ALU)\n• ADD/SUB 加减\n• AND/OR/XOR 逻辑\n• SLL/SRL/SRA 移位\n• SLT/SLTU 比较", 
+            fillcolor="#ff6b6b", color="#dc143c", penwidth=2, fontsize=11];
+        
+        // Branch unit
+        BRANCH [label="分支判断单元\n• BEQ 相等\n• BNE 不等\n• BLT/BGE 有符号比较\n• BLTU/BGEU 无符号比较", 
+               fillcolor="#ffb6c1", color="#dc143c", penwidth=2, fontsize=10];
+        
+        // Jump target calculation
+        JUMP [label="跳转地址计算\n• 分支地址: PC + imm\n• JAL: PC + imm\n• JALR: rs1 + imm", 
+             fillcolor="#ffb6c1", color="#dc143c", penwidth=2, fontsize=10];
+        
+        // PC next generation
+        PC_NEXT [label="PC_next 生成\n• 正常: PC + 4\n• 分支跳转: target\n• branch_taken 信号", 
+                fillcolor="#ffe4e1", color="#ff6347", penwidth=2, fontsize=10];
+        
+        // Pipeline register
+        EXMEM [label="EX/MEM 流水线寄存器\n• ALU 结果\n• 访存控制信号\n• 写回控制信号", 
+              fillcolor="#ffd700", color="#ff8c00", penwidth=2, fontsize=10];
+    }
+    
+    // Output signals
+    subgraph cluster_outputs {
+        label="输出信号";
+        labelloc="t";
+        style="filled";
+        fillcolor="#f0fff0";
+        color="#228b22";
+        penwidth=2;
+        
+        node [shape=ellipse, style="filled", fillcolor="#e6ffe6", 
+              color="#2e8b57", penwidth=2, fontsize=10];
+        
+        PC_NEXT_OUT [label="PC_next\n下一PC"];
+        BR_TAKEN [label="branch_taken\n分支标志"];
+        EXMEM_ALU [label="EX_MEM_alu\nALU结果"];
+        EXMEM_INST [label="EX_MEM_inst"];
+        EXMEM_RD [label="EX_MEM_rd"];
+    }
+    
+    // Input connections
+    CLK -> EXMEM [label="时钟", color="#ff8c00", penwidth=1.5];
+    IDEX_PC -> JUMP [color="#4169e1", penwidth=1.5];
+    IDEX_PC -> PC_NEXT [color="#4169e1", penwidth=1.5, style="dashed"];
+    IDEX_INST -> ALU [label="opcode", color="#4169e1", penwidth=1.5, style="dashed"];
+    IDEX_INST -> BRANCH [label="funct3", color="#4169e1", penwidth=1.5, style="dashed"];
+    IDEX_INST -> EXMEM [color="#4169e1", penwidth=1.5, style="dashed"];
+    
+    IDEX_RS1 -> ALU_SEL [color="#dc143c", penwidth=2];
+    IDEX_RS1 -> BRANCH [label="操作数1", color="#dc143c", penwidth=1.5];
+    IDEX_RS1 -> JUMP [label="rs1", color="#dc143c", penwidth=1.5, style="dashed"];
+    
+    IDEX_RS2 -> ALU_SEL [color="#dc143c", penwidth=2];
+    IDEX_RS2 -> BRANCH [label="操作数2", color="#dc143c", penwidth=1.5];
+    IDEX_RS2 -> EXMEM [label="store数据", color="#dc143c", penwidth=1.5, style="dashed"];
+    
+    IDEX_IMM -> ALU_SEL [color="#9370db", penwidth=1.5];
+    IDEX_IMM -> JUMP [label="offset", color="#9370db", penwidth=1.5];
+    
+    // Internal connections
+    ALU_SEL -> ALU [label="操作数", color="#dc143c", penwidth=2];
+    ALU -> EXMEM [label="结果", color="#dc143c", penwidth=2];
+    
+    BRANCH -> PC_NEXT [label="条件", color="#ff6347", penwidth=1.5];
+    JUMP -> PC_NEXT [label="目标", color="#0000ff", penwidth=2];
+    
+    // Output connections
+    PC_NEXT -> PC_NEXT_OUT [color="#0000ff", penwidth=2];
+    PC_NEXT -> BR_TAKEN [color="#ff6347", penwidth=2];
+    EXMEM -> EXMEM_ALU [color="#228b22", penwidth=2];
+    EXMEM -> EXMEM_INST [color="#228b22", penwidth=1.5];
+    EXMEM -> EXMEM_RD [color="#228b22", penwidth=1.5];
+}

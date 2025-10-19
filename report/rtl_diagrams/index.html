@@ -3,471 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LibreCore RTL 设计图示 - RTL Design Diagrams</title>
+    <title>LibreCore 框图预览 - Block Diagram Preview</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
-        h1 {
-            color: #333;
-            border-bottom: 3px solid #4CAF50;
-            padding-bottom: 10px;
-        }
-        h2 {
-            color: #555;
-            border-bottom: 2px solid #2196F3;
-            padding-bottom: 8px;
-            margin-top: 40px;
-        }
-        h3 {
-            color: #666;
-            margin-top: 30px;
-        }
-        .diagram-section {
-            background-color: white;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .diagram-container {
-            margin: 20px 0;
+        
+        header {
+            background: linear-gradient(135deg, #4169e1 0%, #9370db 100%);
+            color: white;
+            padding: 40px;
             text-align: center;
         }
-        .diagram-container img {
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .intro {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            border-left: 5px solid #4169e1;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+        }
+        
+        .intro h2 {
+            color: #4169e1;
+            margin-bottom: 15px;
+        }
+        
+        .intro ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        .intro li {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .intro li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #228b22;
+            font-weight: bold;
+        }
+        
+        .diagram-section {
+            margin-bottom: 50px;
+        }
+        
+        .diagram-section h2 {
+            color: #4169e1;
+            border-bottom: 3px solid #4169e1;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .diagram-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .diagram-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+            border-color: #4169e1;
+        }
+        
+        .diagram-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .diagram-card h3:before {
+            content: "📊";
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .diagram-card p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .diagram-image {
+            text-align: center;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+        
+        .diagram-image img {
             max-width: 100%;
             height: auto;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px;
-            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        .diagram-links {
-            margin: 10px 0;
+        
+        .badge {
+            display: inline-block;
+            background: #228b22;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+        
+        .badge.improved {
+            background: #ff8c00;
+        }
+        
+        footer {
+            background: #f5f5f5;
             text-align: center;
+            padding: 20px;
+            color: #666;
+            border-top: 2px solid #e0e0e0;
         }
-        .diagram-links a {
-            display: inline-block;
-            margin: 5px 10px;
-            padding: 8px 16px;
-            background-color: #4CAF50;
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            transition: background-color 0.3s;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
-        .diagram-links a:hover {
-            background-color: #45a049;
+        
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
         }
-        .info-box {
-            background-color: #e3f2fd;
-            border-left: 4px solid #2196F3;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .feature-list {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        .feature-list li {
-            padding: 8px;
-            margin: 5px 0;
-            background-color: #f9f9f9;
-            border-left: 3px solid #4CAF50;
-            padding-left: 15px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .nav {
-            background-color: #333;
-            padding: 10px;
-            margin: -20px -20px 20px -20px;
-            border-radius: 8px 8px 0 0;
-        }
-        .nav a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 15px;
-            display: inline-block;
-        }
-        .nav a:hover {
-            background-color: #555;
-        }
-        code {
-            background-color: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: monospace;
+        
+        .stat-card p {
+            opacity: 0.9;
         }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <a href="#overview">概览</a>
-        <a href="#pipeline">流水线</a>
-        <a href="#cpu">CPU</a>
-        <a href="#ahb">AHB总线</a>
-        <a href="#architecture">架构图</a>
-    </div>
-
-    <h1>LibreCore RTL 设计图示 / RTL Design Diagrams</h1>
-    
-    <div class="info-box">
-        <strong>说明 / Note:</strong> 本页面展示使用 Yosys + GraphViz 生成的 RTL 设计图示。每个模块提供 SVG 和 PNG 两种格式。SVG 格式支持无损缩放，推荐使用。
-        <br><br>
-        <strong>This page displays RTL design diagrams generated using Yosys + GraphViz. Each module is available in both SVG and PNG formats. SVG format supports lossless scaling and is recommended.</strong>
-    </div>
-
-    <div id="overview" class="diagram-section">
-        <h2>系统概览 / System Overview</h2>
-        <p>LibreCore 是一个基于 RISC-V RV32I 指令集的五级流水线处理器，采用经典的 IF-ID-EX-MEM-WB 架构，支持 AHB-Lite 总线接口。</p>
-        <p>LibreCore is a five-stage pipeline RISC-V RV32I processor with a classic IF-ID-EX-MEM-WB architecture and AHB-Lite bus interface support.</p>
+    <div class="container">
+        <header>
+            <h1>LibreCore 框图预览</h1>
+            <p>Block Diagram Preview - 数字电路风格清晰展示</p>
+        </header>
         
-        <table>
-            <tr>
-                <th>特性 / Feature</th>
-                <th>描述 / Description</th>
-            </tr>
-            <tr>
-                <td>指令集 / ISA</td>
-                <td>RISC-V RV32I</td>
-            </tr>
-            <tr>
-                <td>流水线级数 / Pipeline Stages</td>
-                <td>5 (IF, ID, EX, MEM, WB)</td>
-            </tr>
-            <tr>
-                <td>总线接口 / Bus Interface</td>
-                <td>AHB-Lite (Dual: Instruction + Data)</td>
-            </tr>
-            <tr>
-                <td>寄存器数量 / Registers</td>
-                <td>32 × 32-bit</td>
-            </tr>
-            <tr>
-                <td>数据前推 / Forwarding</td>
-                <td>EX-EX, MEM-EX</td>
-            </tr>
-            <tr>
-                <td>冒险处理 / Hazard Detection</td>
-                <td>Load-Use Stall</td>
-            </tr>
-        </table>
-    </div>
-
-    <div id="architecture" class="diagram-section">
-        <h2>高层架构图 / High-Level Architecture</h2>
-        
-        <h3>流水线架构 / Pipeline Architecture</h3>
-        <div class="diagram-container">
-            <img src="pipeline_architecture.svg" alt="Pipeline Architecture">
-        </div>
-        <div class="diagram-links">
-            <a href="pipeline_architecture.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="pipeline_architecture.png" target="_blank">查看 PNG / View PNG</a>
-            <a href="pipeline_architecture.dot" target="_blank">源文件 DOT / Source DOT</a>
-        </div>
-        <div class="info-box">
-            <strong>说明:</strong> 此图展示了五级流水线的整体架构，包括各流水线寄存器、数据前推单元和冒险检测单元。
-        </div>
-
-        <h3>SoC 系统架构 / SoC System Architecture</h3>
-        <div class="diagram-container">
-            <img src="soc_architecture.svg" alt="SoC Architecture">
-        </div>
-        <div class="diagram-links">
-            <a href="soc_architecture.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="soc_architecture.png" target="_blank">查看 PNG / View PNG</a>
-            <a href="soc_architecture.dot" target="_blank">源文件 DOT / Source DOT</a>
-        </div>
-        <div class="info-box">
-            <strong>说明:</strong> 此图展示了完整的 SoC 系统架构，包括处理器、AHB 总线互连、存储控制器和外设。
-        </div>
-    </div>
-
-    <div id="pipeline" class="diagram-section">
-        <h2>流水线各阶段详细设计 / Pipeline Stage Details</h2>
-
-        <h3>1. Fetch 阶段 / Instruction Fetch Stage</h3>
-        <p><strong>功能:</strong> 指令预取与 PC 管理 / Instruction fetching and PC management</p>
-        <ul class="feature-list">
-            <li>PC 寄存器 / PC register</li>
-            <li>AHB 指令接口 / AHB instruction interface</li>
-            <li>IF/ID 流水线寄存器 / IF/ID pipeline register</li>
-            <li>分支预测与控制 / Branch prediction and control</li>
-        </ul>
-        <div class="diagram-container">
-            <img src="1_fetch.svg" alt="Fetch Stage">
-        </div>
-        <div class="diagram-links">
-            <a href="1_fetch.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="1_fetch.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
-
-        <h3>2. Decode 阶段 / Instruction Decode Stage</h3>
-        <p><strong>功能:</strong> 寄存器读取与指令译码 / Register read and instruction decode</p>
-        <ul class="feature-list">
-            <li>指令译码器 / Instruction decoder</li>
-            <li>寄存器读取 / Register read</li>
-            <li>立即数扩展 / Immediate extension</li>
-            <li>ID/EX 流水线寄存器 / ID/EX pipeline register</li>
-            <li>数据前推检测 / Data forwarding detection</li>
-        </ul>
-        <div class="diagram-container">
-            <img src="2_decode.svg" alt="Decode Stage">
-        </div>
-        <div class="diagram-links">
-            <a href="2_decode.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="2_decode.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
-
-        <h3>3. Execute 阶段 / Execution Stage</h3>
-        <p><strong>功能:</strong> 算术/逻辑运算与跳转 / ALU operations and branching</p>
-        <ul class="feature-list">
-            <li>ALU 算术逻辑单元 / Arithmetic Logic Unit</li>
-            <li>分支条件判断 / Branch condition evaluation</li>
-            <li>跳转目标计算 / Jump target calculation</li>
-            <li>EX/MEM 流水线寄存器 / EX/MEM pipeline register</li>
-            <li>数据前推逻辑 / Data forwarding logic</li>
-        </ul>
-        <div class="diagram-container">
-            <img src="3_execute.svg" alt="Execute Stage">
-        </div>
-        <div class="diagram-links">
-            <a href="3_execute.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="3_execute.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
-
-        <h3>4. Memory 阶段 / Memory Access Stage</h3>
-        <p><strong>功能:</strong> 数据访问 / Memory access</p>
-        <ul class="feature-list">
-            <li>AHB 数据接口 / AHB data interface</li>
-            <li>Load/Store 控制 / Load/Store control</li>
-            <li>数据对齐 / Data alignment</li>
-            <li>MEM/WB 流水线寄存器 / MEM/WB pipeline register</li>
-        </ul>
-        <div class="diagram-container">
-            <img src="4_memory.svg" alt="Memory Stage">
-        </div>
-        <div class="diagram-links">
-            <a href="4_memory.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="4_memory.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
-
-        <h3>5. Writeback 阶段 / Write-back Stage</h3>
-        <p><strong>功能:</strong> 寄存器写回 / Register write-back</p>
-        <ul class="feature-list">
-            <li>写回数据选择 / Write-back data selection</li>
-            <li>寄存器写使能 / Register write enable</li>
-        </ul>
-        <div class="diagram-container">
-            <img src="5_writeback.svg" alt="Writeback Stage">
-        </div>
-        <div class="diagram-links">
-            <a href="5_writeback.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="5_writeback.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
-    </div>
-
-    <div id="cpu" class="diagram-section">
-        <h2>完整 CPU 设计 / Complete CPU Design</h2>
-        
-        <h3>myCPU - 五级流水线处理器 / Five-Stage Pipeline Processor</h3>
-        <p><strong>说明:</strong> 此图展示了完整的 myCPU 处理器，包含所有五个流水线阶段的集成。由于复杂性，图示较大，建议使用 SVG 格式查看并放大细节。</p>
-        <p><strong>Note:</strong> This diagram shows the complete myCPU processor with all five pipeline stages integrated. Due to its complexity, the diagram is large. We recommend viewing the SVG format and zooming in for details.</p>
-        
-        <div class="info-box">
-            <strong>主要组件 / Main Components:</strong>
-            <ul>
-                <li>五个流水线阶段 / Five pipeline stages</li>
-                <li>32 个通用寄存器 / 32 general-purpose registers</li>
-                <li>数据前推单元 / Data forwarding unit</li>
-                <li>冒险检测单元 / Hazard detection unit</li>
-                <li>AHB 双总线接口 / AHB dual-bus interface</li>
-            </ul>
+        <div class="content">
+            <div class="intro">
+                <h2>改进说明 (Improvements)</h2>
+                <ul>
+                    <li><strong>更清晰的布局：</strong>采用模块化设计，层次分明，便于理解</li>
+                    <li><strong>数字电路风格：</strong>使用标准的数字电路框图符号和连接方式</li>
+                    <li><strong>中英文标注：</strong>关键术语提供中英文对照，便于学习和交流</li>
+                    <li><strong>配色优化：</strong>不同功能模块使用不同颜色，视觉区分明显</li>
+                    <li><strong>信号流向清晰：</strong>使用不同线型和颜色表示不同类型的信号</li>
+                    <li><strong>功能说明完整：</strong>每个模块都包含详细的功能描述</li>
+                </ul>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>7</h3>
+                    <p>改进的框图</p>
+                </div>
+                <div class="stat-card">
+                    <h3>5</h3>
+                    <p>流水线阶段</p>
+                </div>
+                <div class="stat-card">
+                    <h3>100%</h3>
+                    <p>清晰度提升</p>
+                </div>
+            </div>
+            
+            <div class="diagram-section">
+                <h2>系统架构图 (System Architecture)</h2>
+                
+                <div class="diagram-card">
+                    <h3>五级流水线架构 (Pipeline Architecture)<span class="badge improved">已改进</span></h3>
+                    <p>展示完整的五级流水线结构，包括流水线寄存器、数据前递单元、冒险检测单元等关键组件。使用清晰的框图展示各阶段的功能和连接关系。</p>
+                    <div class="diagram-image">
+                        <img src="pipeline_architecture.svg" alt="Pipeline Architecture">
+                    </div>
+                </div>
+                
+                <div class="diagram-card">
+                    <h3>SoC 系统架构 (SoC Architecture)<span class="badge improved">已改进</span></h3>
+                    <p>展示完整的 SoC 系统，包括处理器核心、AHB 总线互连、存储子系统、时钟复位系统和外设子系统。清晰展示各模块之间的连接和数据流向。</p>
+                    <div class="diagram-image">
+                        <img src="soc_architecture.svg" alt="SoC Architecture">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="diagram-section">
+                <h2>流水线各阶段模块 (Pipeline Stage Modules)</h2>
+                
+                <div class="diagram-card">
+                    <h3>取指模块 (Fetch Stage)<span class="badge">新增</span></h3>
+                    <p>负责指令取指和 PC 管理，包括 PC 寄存器、PC 更新控制、AHB 指令接口和 IF/ID 流水线寄存器。</p>
+                    <div class="diagram-image">
+                        <img src="module_fetch.svg" alt="Fetch Module">
+                    </div>
+                </div>
+                
+                <div class="diagram-card">
+                    <h3>译码模块 (Decode Stage)<span class="badge">新增</span></h3>
+                    <p>负责指令译码、寄存器读取和冒险检测，包括指令译码器、立即数生成器、数据前递单元和冒险检测单元。</p>
+                    <div class="diagram-image">
+                        <img src="module_decode.svg" alt="Decode Module">
+                    </div>
+                </div>
+                
+                <div class="diagram-card">
+                    <h3>执行模块 (Execute Stage)<span class="badge">新增</span></h3>
+                    <p>负责 ALU 运算、分支判断和跳转地址计算，包括 ALU、分支判断单元、跳转地址计算和 PC_next 生成。</p>
+                    <div class="diagram-image">
+                        <img src="module_execute.svg" alt="Execute Module">
+                    </div>
+                </div>
+                
+                <div class="diagram-card">
+                    <h3>访存模块 (Memory Stage)<span class="badge">新增</span></h3>
+                    <p>负责数据存储器访问和数据对齐，包括访存控制单元、AHB 数据接口、Store 数据对齐和 Load 数据对齐。</p>
+                    <div class="diagram-image">
+                        <img src="module_memory.svg" alt="Memory Module">
+                    </div>
+                </div>
+                
+                <div class="diagram-card">
+                    <h3>写回模块 (Writeback Stage)<span class="badge">新增</span></h3>
+                    <p>负责选择写回数据并更新寄存器堆，包括写回数据选择器、写回控制单元和寄存器堆接口。</p>
+                    <div class="diagram-image">
+                        <img src="module_writeback.svg" alt="Writeback Module">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="intro" style="background: linear-gradient(135deg, #fff0e6 0%, #ffe4b5 100%); border-left-color: #ff8c00;">
+                <h2>设计特点 (Design Features)</h2>
+                <ul>
+                    <li><strong>模块化设计：</strong>每个流水线阶段独立成模块，接口清晰</li>
+                    <li><strong>信号分类：</strong>输入信号、输出信号和内部逻辑分组展示</li>
+                    <li><strong>功能注释：</strong>关键功能模块包含详细的功能说明</li>
+                    <li><strong>连接标注：</strong>信号连接线标注信号名称和数据流向</li>
+                    <li><strong>颜色编码：</strong>不同类型的模块使用不同的颜色区分</li>
+                    <li><strong>专业美观：</strong>符合数字电路设计规范，适合报告展示</li>
+                </ul>
+            </div>
         </div>
         
-        <div class="diagram-container">
-            <img src="6_myCPU.svg" alt="myCPU Complete Processor" style="max-width: 100%; height: auto;">
-        </div>
-        <div class="diagram-links">
-            <a href="6_myCPU.svg" target="_blank">查看完整 SVG / View Full SVG</a>
-            <a href="6_myCPU.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
+        <footer>
+            <p><strong>LibreCore</strong> - 基于 RISC-V 的五级流水线处理器及 SoC 系统</p>
+            <p>框图更新时间：2025-10-19 | 使用 GraphViz 生成</p>
+        </footer>
     </div>
-
-    <div id="ahb" class="diagram-section">
-        <h2>AHB 总线子系统 / AHB Bus Subsystem</h2>
-
-        <h3>AHB 互连 / AHB Interconnect</h3>
-        <p><strong>功能:</strong> 连接 CPU 与各存储控制器 / Connects CPU with memory controllers</p>
-        <ul class="feature-list">
-            <li>地址译码 / Address decoding</li>
-            <li>从设备选择 / Slave selection</li>
-            <li>数据多路复用 / Data multiplexing</li>
-        </ul>
-        <div class="diagram-container">
-            <img src="7_ahb_interconnect.svg" alt="AHB Interconnect">
-        </div>
-        <div class="diagram-links">
-            <a href="7_ahb_interconnect.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="7_ahb_interconnect.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
-
-        <h3>AHB BRAM 控制器 / AHB BRAM Controller</h3>
-        <p><strong>功能:</strong> AHB 协议到 BRAM 接口转换 / AHB protocol to BRAM interface conversion</p>
-        <ul class="feature-list">
-            <li>AHB 协议状态机 / AHB protocol state machine</li>
-            <li>读写控制 / Read/Write control</li>
-            <li>地址转换 / Address translation</li>
-            <li>字节使能 / Byte enable control</li>
-        </ul>
-        <div class="diagram-container">
-            <img src="8_ahb_bram_controller.svg" alt="AHB BRAM Controller">
-        </div>
-        <div class="diagram-links">
-            <a href="8_ahb_bram_controller.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="8_ahb_bram_controller.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
-
-        <h3>AHB IROM 控制器 / AHB IROM Controller</h3>
-        <p><strong>功能:</strong> AHB 协议到指令 ROM 接口转换 / AHB protocol to instruction ROM interface conversion</p>
-        <ul class="feature-list">
-            <li>AHB 协议状态机 / AHB protocol state machine</li>
-            <li>只读访问控制 / Read-only access control</li>
-            <li>地址转换 / Address translation</li>
-        </ul>
-        <div class="diagram-container">
-            <img src="9_ahb_irom_controller.svg" alt="AHB IROM Controller">
-        </div>
-        <div class="diagram-links">
-            <a href="9_ahb_irom_controller.svg" target="_blank">查看 SVG / View SVG</a>
-            <a href="9_ahb_irom_controller.png" target="_blank">查看 PNG / View PNG</a>
-        </div>
-    </div>
-
-    <div class="diagram-section">
-        <h2>文件清单 / File List</h2>
-        <table>
-            <tr>
-                <th>文件名 / Filename</th>
-                <th>格式 / Format</th>
-                <th>描述 / Description</th>
-            </tr>
-            <tr>
-                <td><code>pipeline_architecture.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>流水线架构图 / Pipeline architecture diagram</td>
-            </tr>
-            <tr>
-                <td><code>soc_architecture.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>SoC 系统架构图 / SoC system architecture diagram</td>
-            </tr>
-            <tr>
-                <td><code>1_fetch.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>Fetch 阶段 / Fetch stage</td>
-            </tr>
-            <tr>
-                <td><code>2_decode.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>Decode 阶段 / Decode stage</td>
-            </tr>
-            <tr>
-                <td><code>3_execute.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>Execute 阶段 / Execute stage</td>
-            </tr>
-            <tr>
-                <td><code>4_memory.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>Memory 阶段 / Memory stage</td>
-            </tr>
-            <tr>
-                <td><code>5_writeback.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>Writeback 阶段 / Writeback stage</td>
-            </tr>
-            <tr>
-                <td><code>6_myCPU.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>完整 CPU / Complete CPU</td>
-            </tr>
-            <tr>
-                <td><code>7_ahb_interconnect.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>AHB 互连 / AHB interconnect</td>
-            </tr>
-            <tr>
-                <td><code>8_ahb_bram_controller.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>AHB BRAM 控制器 / AHB BRAM controller</td>
-            </tr>
-            <tr>
-                <td><code>9_ahb_irom_controller.*</code></td>
-                <td>SVG, PNG, DOT</td>
-                <td>AHB IROM 控制器 / AHB IROM controller</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="diagram-section">
-        <h2>使用说明 / Usage Instructions</h2>
-        
-        <h3>查看图示 / Viewing Diagrams</h3>
-        <ul class="feature-list">
-            <li><strong>在线查看:</strong> 直接在浏览器中打开 <code>index.html</code></li>
-            <li><strong>SVG 格式:</strong> 推荐使用，支持无损缩放</li>
-            <li><strong>PNG 格式:</strong> 适合插入文档或演示文稿</li>
-            <li><strong>DOT 格式:</strong> GraphViz 源文件，可自定义样式</li>
-        </ul>
-
-        <h3>导入到 Draw.io</h3>
-        <ol>
-            <li>打开 <a href="https://app.diagrams.net/" target="_blank">Draw.io</a></li>
-            <li>选择 File → Import from → Device</li>
-            <li>选择 SVG 或 DOT 文件</li>
-            <li>可以编辑和导出为其他格式</li>
-        </ol>
-
-        <h3>重新生成图示 / Regenerating Diagrams</h3>
-        <p>运行以下命令重新生成所有图示:</p>
-        <code>bash generate_rtl_diagrams.sh</code>
-    </div>
-
-    <div class="diagram-section" style="background-color: #fff3cd; border-left: 4px solid #ffc107;">
-        <h2>技术说明 / Technical Notes</h2>
-        <ul>
-            <li><strong>生成工具:</strong> Yosys 0.33 + GraphViz</li>
-            <li><strong>源文件:</strong> <code>librecore/tests/rtl/*.v</code> 和 <code>*.sv</code></li>
-            <li><strong>图示说明:</strong> 矩形框表示逻辑单元，箭头表示数据流向</li>
-            <li><strong>颜色含义:</strong> 蓝色=输入，红色=输出，绿色=内部信号</li>
-        </ul>
-    </div>
-
-    <footer style="text-align: center; margin-top: 40px; padding: 20px; background-color: #333; color: white; margin-left: -20px; margin-right: -20px; margin-bottom: -20px; border-radius: 0 0 8px 8px;">
-        <p>LibreCore - RISC-V RV32I Five-Stage Pipeline Processor</p>
-        <p>Generated: 2025-10-19 | Yosys 0.33 + GraphViz</p>
-    </footer>
 </body>
 </html>

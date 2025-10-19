@@ -1,0 +1,101 @@
+digraph fetch_module {
+    rankdir=LR;
+    bgcolor="white";
+    node [fontname="Arial", fontsize=11];
+    edge [fontname="Arial", fontsize=9];
+    
+    // Title
+    label="取指模块 (Fetch Stage)\n负责指令取指和 PC 管理";
+    labelloc="t";
+    fontname="Arial Bold";
+    fontsize=14;
+    
+    // Input signals
+    subgraph cluster_inputs {
+        label="输入信号";
+        labelloc="t";
+        style="filled";
+        fillcolor="#f0f8ff";
+        color="#4169e1";
+        penwidth=2;
+        
+        node [shape=ellipse, style="filled", fillcolor="#e6f3ff", 
+              color="#4682b4", penwidth=2];
+        
+        CLK [label="CLK\n时钟"];
+        RES [label="RES\n复位"];
+        PC_NEXT [label="PC_next\n下一个PC"];
+        BR_TAKEN [label="branch_taken\n分支跳转"];
+        LOAD_BUB [label="Load_bubble\n冒险停顿"];
+        HRDATA [label="HRDATA_I\n指令数据"];
+        HREADY [label="HREADY_I\nAHB就绪"];
+    }
+    
+    // Main module
+    subgraph cluster_module {
+        label="";
+        style="rounded,filled";
+        fillcolor="#fffaf0";
+        color="#ff8c00";
+        penwidth=3;
+        
+        node [shape=box, style="rounded,filled"];
+        
+        // PC register
+        PC [label="PC 寄存器\n程序计数器", fillcolor="#ffd700", 
+            color="#ff8c00", penwidth=2, fontsize=11];
+        
+        // Control logic
+        PC_CTRL [label="PC 更新控制\n• 正常递增: PC+4\n• 分支跳转: PC_next\n• 冒险停顿: 保持", 
+                fillcolor="#ffe4b5", color="#ff8c00", penwidth=2, fontsize=10];
+        
+        // AHB interface
+        AHB_IF [label="AHB 指令接口\n• 发起读请求\n• NONSEQ 传输\n• 字访问", 
+               fillcolor="#afeeee", color="#20b2aa", penwidth=2, fontsize=10];
+        
+        // Pipeline register
+        IFID [label="IF/ID 流水线寄存器\n• 锁存指令\n• 锁存 PC", 
+             fillcolor="#98fb98", color="#228b22", penwidth=2, fontsize=10];
+    }
+    
+    // Output signals
+    subgraph cluster_outputs {
+        label="输出信号";
+        labelloc="t";
+        style="filled";
+        fillcolor="#f0fff0";
+        color="#228b22";
+        penwidth=2;
+        
+        node [shape=ellipse, style="filled", fillcolor="#e6ffe6", 
+              color="#2e8b57", penwidth=2];
+        
+        HADDR [label="HADDR_I\n指令地址"];
+        HTRANS [label="HTRANS_I\n传输类型"];
+        HSIZE [label="HSIZE_I\n传输大小"];
+        IFID_PC [label="IF_ID_pc\n流水线PC"];
+        IFID_INST [label="IF_ID_inst\n流水线指令"];
+    }
+    
+    // Input connections
+    CLK -> PC [label="时钟", color="#ff8c00", penwidth=1.5];
+    RES -> PC [label="复位", color="#ff0000", penwidth=1.5];
+    PC_NEXT -> PC_CTRL [color="#4169e1", penwidth=1.5];
+    BR_TAKEN -> PC_CTRL [label="分支", color="#dc143c", penwidth=1.5];
+    LOAD_BUB -> PC_CTRL [label="停顿", color="#ff6347", penwidth=1.5];
+    
+    // Internal connections
+    PC -> AHB_IF [label="当前 PC", color="#ff8c00", penwidth=2];
+    PC_CTRL -> PC [label="PC 值", color="#ff8c00", penwidth=2];
+    PC -> IFID [label="PC", color="#228b22", penwidth=1.5, style="dashed"];
+    
+    HRDATA -> IFID [label="指令", color="#20b2aa", penwidth=2];
+    HREADY -> IFID [label="就绪", color="#20b2aa", penwidth=1.5, style="dashed"];
+    
+    // Output connections
+    AHB_IF -> HADDR [color="#20b2aa", penwidth=2];
+    AHB_IF -> HTRANS [color="#20b2aa", penwidth=1.5];
+    AHB_IF -> HSIZE [color="#20b2aa", penwidth=1.5];
+    IFID -> IFID_PC [color="#228b22", penwidth=2];
+    IFID -> IFID_INST [color="#228b22", penwidth=2];
+}

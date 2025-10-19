@@ -284,7 +284,7 @@ if (ID_EX_is_load &&
 
 #### 3.2.1 Fetch模块
 
-![Fetch模块RTL](rtl_diagrams/1_fetch.svg)
+![Fetch模块框图](rtl_diagrams/module_fetch.svg)
 
 **功能描述：**
 Fetch模块负责从指令存储器取指，管理PC值的更新。支持正常PC递增、分支跳转和Load-Use冒险时的PC保持。
@@ -323,7 +323,7 @@ module fetch (
 
 #### 3.2.2 Decode模块
 
-![Decode模块RTL](rtl_diagrams/2_decode.svg)
+![Decode模块框图](rtl_diagrams/module_decode.svg)
 
 **功能描述：**
 Decode模块负责指令译码、寄存器读取、立即数生成以及数据冒险检测。
@@ -367,7 +367,7 @@ module decode (
 
 #### 3.2.3 Execute模块
 
-![Execute模块RTL](rtl_diagrams/3_execute.svg)
+![Execute模块框图](rtl_diagrams/module_execute.svg)
 
 **功能描述：**
 Execute模块负责ALU运算、分支判断和跳转地址计算。
@@ -380,7 +380,7 @@ Execute模块负责ALU运算、分支判断和跳转地址计算。
 
 #### 3.2.4 Memory模块
 
-![Memory模块RTL](rtl_diagrams/4_memory.svg)
+![Memory模块框图](rtl_diagrams/module_memory.svg)
 
 **功能描述：**
 Memory模块负责数据存储器访问，通过AHB接口进行Load/Store操作。
@@ -393,7 +393,7 @@ Memory模块负责数据存储器访问，通过AHB接口进行Load/Store操作�
 
 #### 3.2.5 Writeback模块
 
-![Writeback模块RTL](rtl_diagrams/5_writeback.svg)
+![Writeback模块框图](rtl_diagrams/module_writeback.svg)
 
 **功能描述：**
 Writeback模块负责将执行结果写回寄存器堆。
@@ -405,7 +405,7 @@ Writeback模块负责将执行结果写回寄存器堆。
 
 #### 3.2.6 AHB Interconnect模块
 
-![AHB Interconnect RTL](rtl_diagrams/7_ahb_interconnect.svg)
+![AHB Interconnect 详细RTL](rtl_diagrams/7_ahb_interconnect.svg)
 
 **功能描述：**
 AHB互连模块实现总线仲裁和数据路由。
@@ -414,9 +414,11 @@ AHB互连模块实现总线仲裁和数据路由。
 - **AHB Decoder**：根据地址译码，生成从设备选择信号
 - **AHB Multiplexor**：根据选择信号，将从设备响应路由回主设备
 
+*注：以上为详细RTL结构图，展示完整的逻辑门级实现。*
+
 #### 3.2.7 BRAM Controller模块
 
-![BRAM Controller RTL](rtl_diagrams/8_ahb_bram_controller.svg)
+![BRAM Controller 详细RTL](rtl_diagrams/8_ahb_bram_controller.svg)
 
 **功能描述：**
 BRAM控制器将AHB协议转换为Block RAM接口协议。
@@ -427,9 +429,11 @@ BRAM控制器将AHB协议转换为Block RAM接口协议。
 - 处理BRAM的1周期延迟
 - 生成BRAM的字节写使能信号
 
+*注：以上为详细RTL结构图，展示完整的逻辑门级实现。*
+
 #### 3.2.8 IROM Controller模块
 
-![IROM Controller RTL](rtl_diagrams/9_ahb_irom_controller.svg)
+![IROM Controller 详细RTL](rtl_diagrams/9_ahb_irom_controller.svg)
 
 **功能描述：**
 IROM控制器将AHB协议转换为Block ROM接口协议，用于指令存储。
@@ -438,6 +442,8 @@ IROM控制器将AHB协议转换为Block ROM接口协议，用于指令存储。
 - AHB到ROM协议转换
 - 只读访问，写操作返回错误
 - 支持连续读取
+
+*注：以上为详细RTL结构图，展示完整的逻辑门级实现。*
 
 ### 3.3 资源使用设计
 

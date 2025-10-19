@@ -1,57 +1,140 @@
-digraph architecture {
+digraph pipeline_architecture {
     rankdir=LR;
-    node [shape=box, style=filled, fillcolor=lightblue];
+    bgcolor="white";
+    node [fontname="Arial", fontsize=12];
+    edge [fontname="Arial", fontsize=10];
     
-    // Five Pipeline Stages
+    // Define subgraph for pipeline stages
     subgraph cluster_pipeline {
-        label="Five-Stage Pipeline (myCPU)";
-        style=filled;
-        fillcolor=lightyellow;
+        label="五级流水线处理器 (Five-Stage Pipeline Processor)";
+        labelloc="t";
+        fontname="Arial";
+        fontsize=14;
+        style="rounded,filled";
+        fillcolor="#f0f8ff";
+        color="#4169e1";
+        penwidth=2;
         
-        IF [label="IF\nFetch", fillcolor=lightgreen];
-        ID [label="ID\nDecode", fillcolor=lightgreen];
-        EX [label="EX\nExecute", fillcolor=lightgreen];
-        MEM [label="MEM\nMemory", fillcolor=lightgreen];
-        WB [label="WB\nWriteback", fillcolor=lightgreen];
+        // Pipeline registers as separators
+        node [shape=record, style="filled", fillcolor="#fff8dc", color="#ff8c00", penwidth=2];
         
-        IF -> ID [label="IF/ID"];
-        ID -> EX [label="ID/EX"];
-        EX -> MEM [label="EX/MEM"];
-        MEM -> WB [label="MEM/WB"];
+        // Stage 1: Instruction Fetch
+        IF [label="{<title>IF 取指阶段|{PC 寄存器|指令存储器|PC+4}}",
+            fillcolor="#e6f3ff", color="#4682b4", penwidth=2];
+        
+        IFID [label="IF/ID\n流水线寄存器", shape=box, fillcolor="#ffd700", 
+              color="#ff8c00", penwidth=2, height=0.8];
+        
+        // Stage 2: Instruction Decode
+        ID [label="{<title>ID 译码阶段|{指令译码器|寄存器堆读取|立即数生成}}",
+            fillcolor="#e6ffe6", color="#2e8b57", penwidth=2];
+        
+        IDEX [label="ID/EX\n流水线寄存器", shape=box, fillcolor="#ffd700",
+              color="#ff8c00", penwidth=2, height=0.8];
+        
+        // Stage 3: Execute
+        EX [label="{<title>EX 执行阶段|{ALU 运算|分支判断|跳转地址计算}}",
+            fillcolor="#ffe6e6", color="#dc143c", penwidth=2];
+        
+        EXMEM [label="EX/MEM\n流水线寄存器", shape=box, fillcolor="#ffd700",
+               color="#ff8c00", penwidth=2, height=0.8];
+        
+        // Stage 4: Memory Access
+        MEM [label="{<title>MEM 访存阶段|{数据存储器|Load/Store|数据对齐}}",
+             fillcolor="#f0e6ff", color="#9370db", penwidth=2];
+        
+        MEMWB [label="MEM/WB\n流水线寄存器", shape=box, fillcolor="#ffd700",
+               color="#ff8c00", penwidth=2, height=0.8];
+        
+        // Stage 5: Write Back
+        WB [label="{<title>WB 写回阶段|{写回数据选择|寄存器堆写入}}",
+            fillcolor="#fff0e6", color="#ff8c00", penwidth=2];
+        
+        // Main pipeline flow
+        IF -> IFID [penwidth=2, color="#4169e1"];
+        IFID -> ID [penwidth=2, color="#4169e1"];
+        ID -> IDEX [penwidth=2, color="#4169e1"];
+        IDEX -> EX [penwidth=2, color="#4169e1"];
+        EX -> EXMEM [penwidth=2, color="#4169e1"];
+        EXMEM -> MEM [penwidth=2, color="#4169e1"];
+        MEM -> MEMWB [penwidth=2, color="#4169e1"];
+        MEMWB -> WB [penwidth=2, color="#4169e1"];
     }
     
+    // External components
+    node [shape=box, style="rounded,filled"];
+    
     // Register File
-    RF [label="Register File\n(32 x 32-bit)", shape=cylinder, fillcolor=orange];
+    RF [label="寄存器堆\nRegister File\n(32 × 32-bit)", 
+        fillcolor="#ffebcd", color="#d2691e", penwidth=2, fontsize=11];
     
-    // Forwarding Unit
-    FWD [label="Forwarding\nUnit", shape=diamond, fillcolor=pink];
+    // Control Units
+    subgraph cluster_control {
+        label="控制单元 (Control Units)";
+        labelloc="b";
+        fontname="Arial";
+        fontsize=11;
+        style="dashed,filled";
+        fillcolor="#fafafa";
+        color="#808080";
+        
+        FWD [label="数据前递单元\nForwarding Unit", 
+             fillcolor="#ffe4e1", color="#ff6347", penwidth=2,
+             shape=box, style="rounded,filled", fontsize=10];
+        
+        HAZ [label="冒险检测单元\nHazard Detection", 
+             fillcolor="#ffe4e1", color="#ff6347", penwidth=2,
+             shape=box, style="rounded,filled", fontsize=10];
+    }
     
-    // Hazard Detection
-    HAZ [label="Hazard\nDetection", shape=diamond, fillcolor=pink];
+    // Memory Interfaces
+    subgraph cluster_memory {
+        label="存储器接口 (Memory Interfaces)";
+        labelloc="b";
+        fontname="Arial";
+        fontsize=11;
+        style="dashed,filled";
+        fillcolor="#fafafa";
+        color="#808080";
+        
+        IMEM [label="指令存储器接口\nInstruction Memory\n(AHB)", 
+              fillcolor="#e0ffff", color="#20b2aa", penwidth=2,
+              shape=box, style="rounded,filled", fontsize=10];
+        
+        DMEM [label="数据存储器接口\nData Memory\n(AHB)", 
+              fillcolor="#e0ffff", color="#20b2aa", penwidth=2,
+              shape=box, style="rounded,filled", fontsize=10];
+    }
     
-    // AHB Interfaces
-    AHB_I [label="AHB\nInstruction\nInterface", fillcolor=lightcyan];
-    AHB_D [label="AHB\nData\nInterface", fillcolor=lightcyan];
+    // Connections - Register File
+    ID -> RF [label="读 rs1/rs2", style="dashed", color="#2e8b57", 
+              penwidth=1.5, fontsize=9];
+    RF -> ID [label="寄存器数据", style="dashed", color="#2e8b57", 
+              penwidth=1.5, fontsize=9];
+    WB -> RF [label="写回 rd", style="bold", color="#ff8c00", 
+              penwidth=2, fontsize=9];
     
-    // Connections
-    ID -> RF [label="read", style=dashed];
-    WB -> RF [label="write", style=dashed];
-    RF -> ID [style=dashed];
+    // Connections - Forwarding
+    EX -> FWD [style="dashed", color="#a0a0a0", penwidth=1];
+    MEM -> FWD [style="dashed", color="#a0a0a0", penwidth=1];
+    FWD -> EX [label="前递数据", style="bold", color="#ff6347", 
+               penwidth=2, fontsize=9];
     
-    EX -> FWD [style=dashed];
-    MEM -> FWD [style=dashed];
-    FWD -> EX [label="forward", style=dashed, color=red];
+    // Connections - Hazard Detection
+    ID -> HAZ [style="dashed", color="#a0a0a0", penwidth=1];
+    EX -> HAZ [style="dashed", color="#a0a0a0", penwidth=1];
+    HAZ -> IF [label="停顿", style="dotted", color="#ff0000", 
+               penwidth=2, fontsize=9];
+    HAZ -> IFID [label="气泡", style="dotted", color="#ff0000", 
+                 penwidth=2, fontsize=9];
     
-    ID -> HAZ [style=dashed];
-    EX -> HAZ [style=dashed];
-    HAZ -> IF [label="stall", style=dashed, color=red];
-    HAZ -> ID [label="stall", style=dashed, color=red];
-    
-    IF -> AHB_I [label="fetch"];
-    MEM -> AHB_D [label="load/store"];
-    AHB_I -> IF;
-    AHB_D -> MEM;
+    // Connections - Memory Interfaces
+    IF -> IMEM [label="取指请求", color="#4682b4", penwidth=1.5, fontsize=9];
+    IMEM -> IF [label="指令数据", color="#4682b4", penwidth=1.5, fontsize=9];
+    MEM -> DMEM [label="访存请求", color="#9370db", penwidth=1.5, fontsize=9];
+    DMEM -> MEM [label="读取数据", color="#9370db", penwidth=1.5, fontsize=9];
     
     // Branch feedback
-    EX -> IF [label="branch target", style=dotted, color=blue];
+    EX -> IF [label="分支跳转\n目标地址", style="bold", color="#0000ff", 
+              penwidth=2, fontsize=9, constraint=false];
 }

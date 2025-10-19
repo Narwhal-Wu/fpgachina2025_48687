@@ -1,0 +1,113 @@
+digraph writeback_module {
+    rankdir=LR;
+    bgcolor="white";
+    node [fontname="Arial", fontsize=11];
+    edge [fontname="Arial", fontsize=9];
+    
+    // Title
+    label="写回模块 (Writeback Stage)\n负责选择写回数据并更新寄存器堆";
+    labelloc="t";
+    fontname="Arial Bold";
+    fontsize=14;
+    
+    // Input signals
+    subgraph cluster_inputs {
+        label="输入信号";
+        labelloc="t";
+        style="filled";
+        fillcolor="#f0f8ff";
+        color="#4169e1";
+        penwidth=2;
+        
+        node [shape=ellipse, style="filled", fillcolor="#e6f3ff", 
+              color="#4682b4", penwidth=2, fontsize=10];
+        
+        CLK [label="CLK"];
+        MEMWB_ALU [label="MEM_WB_alu\nALU结果"];
+        MEMWB_DATA [label="MEM_WB_data\nLoad数据"];
+        MEMWB_PC [label="MEM_WB_pc\nPC+4"];
+        MEMWB_INST [label="MEM_WB_inst\n指令"];
+        MEMWB_RD [label="MEM_WB_rd\n目标寄存器"];
+    }
+    
+    // Main module
+    subgraph cluster_module {
+        label="";
+        style="rounded,filled";
+        fillcolor="#fffaf0";
+        color="#ff8c00";
+        penwidth=3;
+        
+        node [shape=box, style="rounded,filled"];
+        
+        // Write back data selection
+        WB_MUX [label="写回数据选择器\n• ALU 结果\n• Load 数据\n• PC + 4", 
+               fillcolor="#ffd700", color="#ff8c00", penwidth=2, fontsize=11];
+        
+        // Write enable generation
+        WB_CTRL [label="写回控制单元\n• 生成写使能\n• rd ≠ x0 检查\n• 指令类型检查", 
+                fillcolor="#ffe4b5", color="#ff8c00", penwidth=2, fontsize=10];
+    }
+    
+    // Output signals
+    subgraph cluster_outputs {
+        label="输出信号";
+        labelloc="t";
+        style="filled";
+        fillcolor="#f0fff0";
+        color="#228b22";
+        penwidth=2;
+        
+        node [shape=ellipse, style="filled", fillcolor="#e6ffe6", 
+              color="#2e8b57", penwidth=2, fontsize=10];
+        
+        WB_DATA [label="wb_data\n写回数据"];
+        WB_RD [label="wb_rd\n目标寄存器"];
+        WB_EN [label="wb_en\n写使能"];
+    }
+    
+    // Register file (external)
+    node [shape=cylinder, style="filled", fillcolor="#ffebcd", 
+          color="#d2691e", penwidth=2, fontsize=11];
+    RF [label="寄存器堆\nRegister File\n32 × 32-bit"];
+    
+    // Input connections
+    CLK -> WB_CTRL [label="时钟", color="#ff8c00", penwidth=1.5];
+    
+    MEMWB_ALU -> WB_MUX [label="ALU", color="#4169e1", penwidth=2];
+    MEMWB_DATA -> WB_MUX [label="Load", color="#4169e1", penwidth=2];
+    MEMWB_PC -> WB_MUX [label="PC+4", color="#4169e1", penwidth=1.5];
+    
+    MEMWB_INST -> WB_MUX [label="选择控制", color="#4169e1", penwidth=1.5, style="dashed"];
+    MEMWB_INST -> WB_CTRL [label="类型", color="#4169e1", penwidth=1.5, style="dashed"];
+    
+    MEMWB_RD -> WB_CTRL [label="rd", color="#4169e1", penwidth=1.5];
+    
+    // Internal connections
+    WB_MUX -> WB_DATA [label="数据", color="#ff8c00", penwidth=2];
+    WB_CTRL -> WB_EN [label="使能", color="#ff8c00", penwidth=1.5];
+    WB_CTRL -> WB_RD [label="地址", color="#ff8c00", penwidth=1.5];
+    
+    // To register file
+    WB_DATA -> RF [label="写数据", color="#228b22", penwidth=2];
+    WB_RD -> RF [label="地址", color="#228b22", penwidth=1.5];
+    WB_EN -> RF [label="使能", color="#228b22", penwidth=1.5];
+    
+    // Note box
+    subgraph cluster_note {
+        label="注意事项";
+        labelloc="b";
+        style="dashed,filled";
+        fillcolor="#fffacd";
+        color="#daa520";
+        
+        note [shape=plaintext, fontsize=9, label=<
+            <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2">
+            <TR><TD ALIGN="LEFT">• x0 寄存器恒为 0，不可写入</TD></TR>
+            <TR><TD ALIGN="LEFT">• JAL/JALR 指令写回 PC+4</TD></TR>
+            <TR><TD ALIGN="LEFT">• Load 指令写回存储器数据</TD></TR>
+            <TR><TD ALIGN="LEFT">• 其他指令写回 ALU 结果</TD></TR>
+            </TABLE>
+        >];
+    }
+}
