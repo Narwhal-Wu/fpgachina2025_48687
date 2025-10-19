@@ -134,7 +134,7 @@ digraph soc_architecture {
                 fillcolor="#ffe4b5", color="#ff8c00", penwidth=2];
         }
         
-        // Peripheral Subsystem
+        // Peripheral Subsystem - vertically arranged
         subgraph cluster_periph {
             label="外设子系统 (Peripheral Subsystem)";
             labelloc="t";
@@ -147,17 +147,20 @@ digraph soc_architecture {
             
             node [shape=box, style="rounded,filled", fontsize=10];
             
-            UART [label="UART 控制器\nSerial Interface", 
-                 fillcolor="#90ee90", color="#228b22", penwidth=2];
+            KEY [label="按键消抖\nKey Debounce", 
+                fillcolor="#90ee90", color="#228b22", penwidth=2];
             
-            SEG7 [label="数码管控制器\n7-Segment Driver", 
+            UART [label="UART 控制器\nSerial Interface", 
                  fillcolor="#90ee90", color="#228b22", penwidth=2];
             
             LED [label="LED 控制器\nLED Driver", 
                 fillcolor="#90ee90", color="#228b22", penwidth=2];
             
-            KEY [label="按键消抖\nKey Debounce", 
-                fillcolor="#90ee90", color="#228b22", penwidth=2];
+            SEG7 [label="数码管控制器\n7-Segment Driver", 
+                 fillcolor="#90ee90", color="#228b22", penwidth=2];
+            
+            // Force vertical arrangement
+            KEY -> UART -> LED -> SEG7 [style=invis];
         }
     }
     
