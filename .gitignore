@@ -33,7 +33,6 @@
 *.hex
 
 # ---- 报告 / 导出 / 生成文件 ----
-*.html
 *.xml
 *.rpt
 *.csv
@@ -45,6 +44,13 @@
 *.edif
 *.edf
 *.srp
+
+# Exclude HTML files except for documentation
+*.html
+!report/rtl_diagrams/index.html
+
+# Exclude large PNG diagram files (keep SVG and DOT)
+report/rtl_diagrams/*.png
 
 # ---- 仿真生成文件 (通用) ----
 *.wdb

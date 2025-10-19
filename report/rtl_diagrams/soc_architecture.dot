@@ -1,0 +1,108 @@
+digraph soc_architecture {
+    rankdir=TB;
+    node [shape=box, style=filled];
+    
+    // SoC Top Level
+    subgraph cluster_soc {
+        label="SoC Top Level (TOP_AI)";
+        style=filled;
+        fillcolor=lightgray;
+        
+        // CPU
+        subgraph cluster_cpu {
+            label="myCPU (RV32I Processor)";
+            style=filled;
+            fillcolor=lightblue;
+            
+            CPU [label="Five-Stage\nPipeline\nProcessor", fillcolor=lightgreen, shape=component];
+            CPU_I [label="AHB-I", shape=plaintext];
+            CPU_D [label="AHB-D", shape=plaintext];
+        }
+        
+        // AHB Interconnect
+        subgraph cluster_ahb {
+            label="AHB Interconnect";
+            style=filled;
+            fillcolor=lightyellow;
+            
+            DECODER [label="AHB\nDecoder", fillcolor=orange];
+            MUX [label="AHB\nMultiplexer", fillcolor=orange];
+        }
+        
+        // Memory Controllers
+        subgraph cluster_mem {
+            label="Memory Subsystem";
+            style=filled;
+            fillcolor=lightcyan;
+            
+            IROM_CTRL [label="IROM\nController", fillcolor=pink];
+            BRAM_CTRL [label="BRAM\nController", fillcolor=pink];
+        }
+        
+        // Memory Blocks
+        IROM [label="Instruction\nROM", shape=cylinder, fillcolor=wheat];
+        BRAM [label="Data\nRAM", shape=cylinder, fillcolor=wheat];
+        
+        // Peripherals
+        subgraph cluster_periph {
+            label="Peripherals";
+            style=filled;
+            fillcolor=lavender;
+            
+            UART [label="UART", fillcolor=lightgreen];
+            SEG7 [label="7-Segment\nDisplay", fillcolor=lightgreen];
+            LED [label="LED\nController", fillcolor=lightgreen];
+            KEY [label="Key\nDebounce", fillcolor=lightgreen];
+        }
+        
+        // Clock and Reset
+        PLL [label="PLL", shape=ellipse, fillcolor=yellow];
+    }
+    
+    // External Interfaces
+    CLK_IN [label="CLK100MHZ", shape=ellipse, fillcolor=gold];
+    RESET [label="CPU_RESETN", shape=ellipse, fillcolor=red];
+    BUTTONS [label="Buttons\n(5x)", shape=parallelogram, fillcolor=lightgray];
+    LEDS [label="LEDs\n(16x + RGB)", shape=parallelogram, fillcolor=lightgray];
+    DISPLAY [label="7-Segment\nDisplay", shape=parallelogram, fillcolor=lightgray];
+    UART_IO [label="UART\nRX/TX", shape=parallelogram, fillcolor=lightgray];
+    
+    // Connections - Clock and Reset
+    CLK_IN -> PLL;
+    RESET -> PLL;
+    PLL -> CPU [label="clk"];
+    PLL -> DECODER [label="clk"];
+    PLL -> MUX [label="clk"];
+    PLL -> IROM_CTRL [label="clk"];
+    PLL -> BRAM_CTRL [label="clk"];
+    
+    // CPU to AHB
+    CPU_I -> DECODER [label="HADDR_I"];
+    CPU_D -> DECODER [label="HADDR_D"];
+    
+    // AHB Decoder to Controllers
+    DECODER -> IROM_CTRL [label="HSEL"];
+    DECODER -> BRAM_CTRL [label="HSEL"];
+    
+    // Controllers to Memory
+    IROM_CTRL -> IROM;
+    BRAM_CTRL -> BRAM;
+    
+    // Memory to MUX
+    IROM -> MUX [label="HRDATA"];
+    BRAM -> MUX [label="HRDATA"];
+    
+    // MUX to CPU
+    MUX -> CPU_I [label="instruction"];
+    MUX -> CPU_D [label="data"];
+    
+    // Peripherals to External
+    BUTTONS -> KEY;
+    KEY -> LED [style=dashed];
+    LED -> LEDS;
+    SEG7 -> DISPLAY;
+    UART -> UART_IO [dir=both];
+    
+    // CPU to Peripherals (data display)
+    CPU -> SEG7 [label="x31 reg", style=dashed];
+}

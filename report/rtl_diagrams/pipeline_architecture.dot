@@ -1,0 +1,57 @@
+digraph architecture {
+    rankdir=LR;
+    node [shape=box, style=filled, fillcolor=lightblue];
+    
+    // Five Pipeline Stages
+    subgraph cluster_pipeline {
+        label="Five-Stage Pipeline (myCPU)";
+        style=filled;
+        fillcolor=lightyellow;
+        
+        IF [label="IF\nFetch", fillcolor=lightgreen];
+        ID [label="ID\nDecode", fillcolor=lightgreen];
+        EX [label="EX\nExecute", fillcolor=lightgreen];
+        MEM [label="MEM\nMemory", fillcolor=lightgreen];
+        WB [label="WB\nWriteback", fillcolor=lightgreen];
+        
+        IF -> ID [label="IF/ID"];
+        ID -> EX [label="ID/EX"];
+        EX -> MEM [label="EX/MEM"];
+        MEM -> WB [label="MEM/WB"];
+    }
+    
+    // Register File
+    RF [label="Register File\n(32 x 32-bit)", shape=cylinder, fillcolor=orange];
+    
+    // Forwarding Unit
+    FWD [label="Forwarding\nUnit", shape=diamond, fillcolor=pink];
+    
+    // Hazard Detection
+    HAZ [label="Hazard\nDetection", shape=diamond, fillcolor=pink];
+    
+    // AHB Interfaces
+    AHB_I [label="AHB\nInstruction\nInterface", fillcolor=lightcyan];
+    AHB_D [label="AHB\nData\nInterface", fillcolor=lightcyan];
+    
+    // Connections
+    ID -> RF [label="read", style=dashed];
+    WB -> RF [label="write", style=dashed];
+    RF -> ID [style=dashed];
+    
+    EX -> FWD [style=dashed];
+    MEM -> FWD [style=dashed];
+    FWD -> EX [label="forward", style=dashed, color=red];
+    
+    ID -> HAZ [style=dashed];
+    EX -> HAZ [style=dashed];
+    HAZ -> IF [label="stall", style=dashed, color=red];
+    HAZ -> ID [label="stall", style=dashed, color=red];
+    
+    IF -> AHB_I [label="fetch"];
+    MEM -> AHB_D [label="load/store"];
+    AHB_I -> IF;
+    AHB_D -> MEM;
+    
+    // Branch feedback
+    EX -> IF [label="branch target", style=dotted, color=blue];
+}
