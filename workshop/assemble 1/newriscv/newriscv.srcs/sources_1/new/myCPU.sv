@@ -43,7 +43,9 @@ module myCPU (
   output     [2:0]  HBURST_D,            // AHB突发类型（数据）
   output     [1:0]  HTRANS_D,            // AHB传输类型（数据）
   output            HMASTLOCK_D,         // AHB主设备锁定（数据）
-  output     [3:0]  HPROT_D              // AHB保护控制（数据）
+  output     [3:0]  HPROT_D,             // AHB保护控制（数据）
+  // 调试输出：对外导出寄存器 x31 的 32bit 数值，用于数码管显示
+  output     [31:0] REGS_X31
 );
 
 //====================================================================================
@@ -256,6 +258,9 @@ writeback mywriteback (
 
   .REGS_MEM_WB_rd(REGS_MEM_WB_rd)
 );
+
+// 将文件寄存器数组中的 x31 值直接导出
+assign REGS_X31 = REGS[31];
 
 //根据指令写回file register
 always @(*) begin

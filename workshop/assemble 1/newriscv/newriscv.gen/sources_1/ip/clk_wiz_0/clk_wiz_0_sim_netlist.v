@@ -2,10 +2,10 @@
 // Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2023.2 (win64) Build 4029153 Fri Oct 13 20:14:34 MDT 2023
-// Date        : Mon Oct 20 00:39:40 2025
-// Host        : LAPTOP-N8FCCN37 running 64-bit major release  (build 9200)
-// Command     : write_verilog -force -mode funcsim {d:/M/nk/verilog/openRV/myq/LibreCore/workshop/assemble
-//               1/newriscv/newriscv.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_sim_netlist.v}
+// Date        : Fri Oct 10 21:00:25 2025
+// Host        : lsh running 64-bit major release  (build 9200)
+// Command     : write_verilog -force -mode funcsim -rename_top clk_wiz_0 -prefix
+//               clk_wiz_0_ clk_wiz_0_sim_netlist.v
 // Design      : clk_wiz_0
 // Purpose     : This verilog netlist is a functional simulation representation of the design and should not be modified
 //               or synthesized. This netlist cannot be used for SDF annotated simulation.
@@ -29,14 +29,14 @@ module clk_wiz_0
   wire locked;
   wire reset;
 
-  clk_wiz_0_clk_wiz inst
+  clk_wiz_0_clk_wiz_0_clk_wiz inst
        (.clk_in1(clk_in1),
         .clk_out1(clk_out1),
         .locked(locked),
         .reset(reset));
 endmodule
 
-module clk_wiz_0_clk_wiz
+module clk_wiz_0_clk_wiz_0_clk_wiz
    (clk_out1,
     reset,
     locked,
@@ -50,10 +50,12 @@ module clk_wiz_0_clk_wiz
   wire clk_in1_clk_wiz_0;
   wire clk_out1;
   wire clk_out1_clk_wiz_0;
+  wire clk_out1_clk_wiz_0_en_clk;
   wire clkfbout_buf_clk_wiz_0;
   wire clkfbout_clk_wiz_0;
   wire locked;
   wire reset;
+  (* RTL_KEEP = "true" *) (* async_reg = "true" *) wire [7:0]seq_reg1;
   wire NLW_plle2_adv_inst_CLKOUT1_UNCONNECTED;
   wire NLW_plle2_adv_inst_CLKOUT2_UNCONNECTED;
   wire NLW_plle2_adv_inst_CLKOUT3_UNCONNECTED;
@@ -76,17 +78,35 @@ module clk_wiz_0_clk_wiz
        (.I(clk_in1),
         .O(clk_in1_clk_wiz_0));
   (* BOX_TYPE = "PRIMITIVE" *) 
-  BUFG clkout1_buf
+  (* XILINX_LEGACY_PRIM = "BUFGCE" *) 
+  (* XILINX_TRANSFORM_PINMAP = "CE:CE0 I:I0 GND:S1,IGNORE0,CE1 VCC:S0,IGNORE1,I1" *) 
+  BUFGCTRL #(
+    .INIT_OUT(0),
+    .PRESELECT_I0("TRUE"),
+    .PRESELECT_I1("FALSE"),
+    .SIM_DEVICE("7SERIES")) 
+    clkout1_buf
+       (.CE0(seq_reg1[7]),
+        .CE1(1'b0),
+        .I0(clk_out1_clk_wiz_0),
+        .I1(1'b1),
+        .IGNORE0(1'b0),
+        .IGNORE1(1'b1),
+        .O(clk_out1),
+        .S0(1'b1),
+        .S1(1'b0));
+  (* BOX_TYPE = "PRIMITIVE" *) 
+  BUFH clkout1_buf_en
        (.I(clk_out1_clk_wiz_0),
-        .O(clk_out1));
+        .O(clk_out1_clk_wiz_0_en_clk));
   (* BOX_TYPE = "PRIMITIVE" *) 
   PLLE2_ADV #(
     .BANDWIDTH("OPTIMIZED"),
-    .CLKFBOUT_MULT(9),
+    .CLKFBOUT_MULT(17),
     .CLKFBOUT_PHASE(0.000000),
     .CLKIN1_PERIOD(10.000000),
     .CLKIN2_PERIOD(0.000000),
-    .CLKOUT0_DIVIDE(9),
+    .CLKOUT0_DIVIDE(17),
     .CLKOUT0_DUTY_CYCLE(0.500000),
     .CLKOUT0_PHASE(0.000000),
     .CLKOUT1_DIVIDE(1),
@@ -105,7 +125,7 @@ module clk_wiz_0_clk_wiz
     .CLKOUT5_DUTY_CYCLE(0.500000),
     .CLKOUT5_PHASE(0.000000),
     .COMPENSATION("ZHOLD"),
-    .DIVCLK_DIVIDE(1),
+    .DIVCLK_DIVIDE(2),
     .IS_CLKINSEL_INVERTED(1'b0),
     .IS_PWRDWN_INVERTED(1'b0),
     .IS_RST_INVERTED(1'b0),
@@ -134,6 +154,86 @@ module clk_wiz_0_clk_wiz
         .LOCKED(locked),
         .PWRDWN(1'b0),
         .RST(reset));
+  (* ASYNC_REG *) 
+  (* KEEP = "yes" *) 
+  FDCE #(
+    .INIT(1'b0)) 
+    \seq_reg1_reg[0] 
+       (.C(clk_out1_clk_wiz_0_en_clk),
+        .CE(1'b1),
+        .CLR(reset),
+        .D(locked),
+        .Q(seq_reg1[0]));
+  (* ASYNC_REG *) 
+  (* KEEP = "yes" *) 
+  FDCE #(
+    .INIT(1'b0)) 
+    \seq_reg1_reg[1] 
+       (.C(clk_out1_clk_wiz_0_en_clk),
+        .CE(1'b1),
+        .CLR(reset),
+        .D(seq_reg1[0]),
+        .Q(seq_reg1[1]));
+  (* ASYNC_REG *) 
+  (* KEEP = "yes" *) 
+  FDCE #(
+    .INIT(1'b0)) 
+    \seq_reg1_reg[2] 
+       (.C(clk_out1_clk_wiz_0_en_clk),
+        .CE(1'b1),
+        .CLR(reset),
+        .D(seq_reg1[1]),
+        .Q(seq_reg1[2]));
+  (* ASYNC_REG *) 
+  (* KEEP = "yes" *) 
+  FDCE #(
+    .INIT(1'b0)) 
+    \seq_reg1_reg[3] 
+       (.C(clk_out1_clk_wiz_0_en_clk),
+        .CE(1'b1),
+        .CLR(reset),
+        .D(seq_reg1[2]),
+        .Q(seq_reg1[3]));
+  (* ASYNC_REG *) 
+  (* KEEP = "yes" *) 
+  FDCE #(
+    .INIT(1'b0)) 
+    \seq_reg1_reg[4] 
+       (.C(clk_out1_clk_wiz_0_en_clk),
+        .CE(1'b1),
+        .CLR(reset),
+        .D(seq_reg1[3]),
+        .Q(seq_reg1[4]));
+  (* ASYNC_REG *) 
+  (* KEEP = "yes" *) 
+  FDCE #(
+    .INIT(1'b0)) 
+    \seq_reg1_reg[5] 
+       (.C(clk_out1_clk_wiz_0_en_clk),
+        .CE(1'b1),
+        .CLR(reset),
+        .D(seq_reg1[4]),
+        .Q(seq_reg1[5]));
+  (* ASYNC_REG *) 
+  (* KEEP = "yes" *) 
+  FDCE #(
+    .INIT(1'b0)) 
+    \seq_reg1_reg[6] 
+       (.C(clk_out1_clk_wiz_0_en_clk),
+        .CE(1'b1),
+        .CLR(reset),
+        .D(seq_reg1[5]),
+        .Q(seq_reg1[6]));
+  (* ASYNC_REG *) 
+  (* KEEP = "yes" *) 
+  FDCE #(
+    .INIT(1'b0)) 
+    \seq_reg1_reg[7] 
+       (.C(clk_out1_clk_wiz_0_en_clk),
+        .CE(1'b1),
+        .CLR(reset),
+        .D(seq_reg1[6]),
+        .Q(seq_reg1[7]));
 endmodule
 `ifndef GLBL
 `define GLBL

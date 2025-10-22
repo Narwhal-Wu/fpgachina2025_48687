@@ -59,6 +59,10 @@ module TOP(
     wire        pll_reset;
     wire        pll_locked;
     wire        clk_cpu;
+    // Reset synchronizer: async assert (CPU_RESETN & pll_locked), sync deassert in clk_cpu domain
+    wire        rstn_async = CPU_RESETN & pll_locked;
+    reg  [3:0]  rst_sync_shreg;
+    wire        rstn;
     
     // 按键去抖信号
     wire btnc_press, btnc_state;
@@ -71,7 +75,18 @@ module TOP(
     reg  [15:0] led_reg;
     reg  [5:0]  rgb_reg; // [LED17_R, LED17_G, LED17_B, LED16_R, LED16_G, LED16_B]
     
+    //
+    
     assign pll_reset = ~CPU_RESETN;
+
+    // Reset synchronizer body
+    always @(posedge clk_cpu or negedge rstn_async) begin
+        if (!rstn_async)
+            rst_sync_shreg <= 4'b0000;
+        else
+            rst_sync_shreg <= {rst_sync_shreg[2:0], 1'b1};
+    end
+    assign rstn = rst_sync_shreg[3];
 
     // ================================
     // myCPU 实例�?
@@ -103,9 +118,12 @@ module TOP(
     wire        HREADY_D;
     wire        HRESP_D;
 
+    // 从CPU导出的调试值：x31寄存器的32位数据
+    wire [31:0] cpu_reg31_value;
+
     myCPU cpu_inst (
         .HCLK(clk_cpu),                // 时钟信号
-        .HRESETn(pll_locked),          // 复位信号（低有效�?
+        .HRESETn(rstn),                // 复位信号（低有效，同步释放）
 
         // AHB指令接口
         .HRDATA_I(HRDATA_I),
@@ -131,7 +149,8 @@ module TOP(
         .HBURST_D(HBURST_D),
         .HTRANS_D(HTRANS_D),
         .HMASTLOCK_D(HMASTLOCK_D),
-        .HPROT_D(HPROT_D)
+        .HPROT_D(HPROT_D),
+        .REGS_X31(cpu_reg31_value)
     );
 
     // PLL实例�?
@@ -145,7 +164,7 @@ module TOP(
     // 中间按键去抖
     key_debounce debounce_btnc (
         .clk(clk_cpu),
-        .rst_n(pll_locked),
+        .rst_n(rstn),
         .key_i(BTNC),
         .key_press(btnc_press),
         .key_state(btnc_state)
@@ -154,7 +173,7 @@ module TOP(
     // 上按键去�?
     key_debounce debounce_btnu (
         .clk(clk_cpu),
-        .rst_n(pll_locked),
+        .rst_n(rstn),
         .key_i(BTNU),
         .key_press(btnu_press),
         .key_state(btnu_state)
@@ -163,7 +182,7 @@ module TOP(
     // 下按键去�?
     key_debounce debounce_btnd (
         .clk(clk_cpu),
-        .rst_n(pll_locked),
+        .rst_n(rstn),
         .key_i(BTND),
         .key_press(btnd_press),
         .key_state(btnd_state)
@@ -172,7 +191,7 @@ module TOP(
     // 左按键去�?
     key_debounce debounce_btnl (
         .clk(clk_cpu),
-        .rst_n(pll_locked),
+        .rst_n(rstn),
         .key_i(BTNL),
         .key_press(btnl_press),
         .key_state(btnl_state)
@@ -181,15 +200,15 @@ module TOP(
     // 右按键去�?
     key_debounce debounce_btnr (
         .clk(clk_cpu),
-        .rst_n(pll_locked),
+        .rst_n(rstn),
         .key_i(BTNR),
         .key_press(btnr_press),
         .key_state(btnr_state)
     );
 
     // LED控制逻辑
-    always @(posedge clk_cpu or negedge pll_locked) begin
-        if (!pll_locked) begin
+    always @(posedge clk_cpu or negedge rstn) begin
+        if (!rstn) begin
             led_reg <= 16'h0000;
             rgb_reg <= 6'b000000;
         end else begin
@@ -237,8 +256,8 @@ module TOP(
     // 7-segment display module instantiation
     Seven_Seg seven_seg_inst (
         .clk(clk_cpu),
-        .reset(~pll_locked), // 使用PLL锁定信号作为复位
-        .data({16'h0000, led_reg}), // 显示LED寄存器的�?16位，可更�?
+        .reset(~rstn),
+        .data(cpu_reg31_value),
         .anode(anode),
         .cathode(cathode),
         .dp(dp)
@@ -256,7 +275,7 @@ module TOP(
         .BAUD_RATE(9600)         // 波特�?
     ) uart_inst (
         .clk(clk_cpu),
-        .reset(~pll_locked),
+        .reset(~rstn),
         .rx(UART_RX),
         .tx(UART_TX),
         .tx_data(uart_tx_data),
@@ -270,8 +289,8 @@ module TOP(
     reg [31:0] display_data;
 
     // UART接收逻辑
-    always @(posedge clk_cpu or negedge pll_locked) begin
-        if (!pll_locked) begin
+    always @(posedge clk_cpu or negedge rstn) begin
+        if (!rstn) begin
             display_data <= 32'h00000000; // 初始化显示数�?
         end else begin
             if (uart_rx_ready) begin
@@ -282,8 +301,8 @@ module TOP(
     end
 
     // UART发�?��?�辑
-    always @(posedge clk_cpu or negedge pll_locked) begin
-        if (!pll_locked) begin
+    always @(posedge clk_cpu or negedge rstn) begin
+        if (!rstn) begin
             uart_tx_data <= 8'h00;
             uart_tx_start <= 1'b0;
         end else begin
@@ -326,9 +345,9 @@ module TOP(
     // );
 
 
-     AHB_bram_controller bramc (
+      AHB_bram_controller bramc (
         .HCLK(clk_cpu),
-        .HRESETn(pll_locked),
+          .HRESETn(rstn),
         .HSELx(1),
         .HADDR(HADDR_D),
         .HWRITE(HWRITE_D),
@@ -351,7 +370,7 @@ module TOP(
 
     AHB_irom_controller iromc (
         .HCLK(clk_cpu),
-        .HRESETn(pll_locked),
+        .HRESETn(rstn),
         .HSELx(1),
         .HADDR(HADDR_I),
         .HWRITE(HWRITE_I),
