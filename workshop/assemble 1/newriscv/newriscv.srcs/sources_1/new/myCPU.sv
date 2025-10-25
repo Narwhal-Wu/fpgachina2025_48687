@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
-//====================================================================================
-//根据RV32I指令集，定义每一种opcode
-//====================================================================================
+
+// RISC-V instruction opcodes
 `define LUI   7'b0110111
 `define AUIPC 7'b0010111
 `define JAL   7'b1101111
@@ -13,51 +12,50 @@
 `define RCC   7'b0110011
 `define SYS   7'b1110011
 
-//====================================================================================
 module myCPU (
-  //AHB全局信号
-  input             HCLK,                //AHB时钟信号
-  input             HRESETn,             //AHB复位（低有效�?
+  // AHB global signals
+  input             HCLK,                // AHB clock
+  input             HRESETn,             // AHB reset (active low)
   
-  //AHB指令接口
-  input      [31:0] HRDATA_I,            // AHB读数据（指令�?
-  input             HREADY_I,            // AHB传输完成（指令）
-  input             HRESP_I,             // AHB响应（指令）
-  output     [31:0] HADDR_I,             // AHB地址（指令）
-  output            HWRITE_I,            // AHB写使能（指令，应�?0�?
-  output     [2:0]  HSIZE_I,             // AHB传输大小（指令）
-  output     [2:0]  HBURST_I,            // AHB突发类型（指令）
-  output     [1:0]  HTRANS_I,            // AHB传输类型（指令）
-  output            HMASTLOCK_I,         // AHB主设备锁定（指令�?
-  output     [31:0] HWDATA_I,            // AHB写数据（指令�?
-  output     [3:0]  HPROT_I,             // AHB保护控制（指令）
+  // AHB instruction interface
+  input      [31:0] HRDATA_I,            // AHB read data (instruction)
+  input             HREADY_I,            // AHB transfer complete (instruction)
+  input             HRESP_I,             // AHB response (instruction)
+  output     [31:0] HADDR_I,             // AHB address (instruction)
+  output            HWRITE_I,            // AHB write enable (instruction, always 0)
+  output     [2:0]  HSIZE_I,             // AHB transfer size (instruction)
+  output     [2:0]  HBURST_I,            // AHB burst type (instruction)
+  output     [1:0]  HTRANS_I,            // AHB transfer type (instruction)
+  output            HMASTLOCK_I,         // AHB master lock (instruction)
+  output     [31:0] HWDATA_I,            // AHB write data (instruction)
+  output     [3:0]  HPROT_I,             // AHB protection control (instruction)
   
-  //AHB数据接口
-  input      [31:0] HRDATA_D,            // AHB读数据（数据�?
-  input             HREADY_D,            // AHB传输完成（数据）
-  input             HRESP_D,             // AHB响应（数据）
-  output     [31:0] HADDR_D,             // AHB地址（数据）
-  output     [31:0] HWDATA_D,            // AHB写数据（数据�?
-  output            HWRITE_D,            // AHB写使能（数据�?
-  output     [2:0]  HSIZE_D,             // AHB传输大小（数据）
-  output     [2:0]  HBURST_D,            // AHB突发类型（数据）
-  output     [1:0]  HTRANS_D,            // AHB传输类型（数据）
-  output            HMASTLOCK_D,         // AHB主设备锁定（数据�?
-  output     [3:0]  HPROT_D,             // AHB保护控制（数据）
-  // 调试输出：对外导出寄存器 x31 �? 32bit 数�?�，用于数码管显�?
-  output     [31:0] REGS_X31,
-  output     [31:0] PC
+  // AHB data interface
+  input      [31:0] HRDATA_D,            // AHB read data (data)
+  input             HREADY_D,            // AHB transfer complete (data)
+  input             HRESP_D,             // AHB response (data)
+  output     [31:0] HADDR_D,             // AHB address (data)
+  output     [31:0] HWDATA_D,            // AHB write data (data)
+  output            HWRITE_D,            // AHB write enable (data)
+  output     [2:0]  HSIZE_D,             // AHB transfer size (data)
+  output     [2:0]  HBURST_D,            // AHB burst type (data)
+  output     [1:0]  HTRANS_D,            // AHB transfer type (data)
+  output            HMASTLOCK_D,         // AHB master lock (data)
+  output     [3:0]  HPROT_D,             // AHB protection control (data)
+  
+  // Debug outputs
+  output     [31:0] REGS_X31,            // Register x31 value for display
+  output     [31:0] PC                   // Current program counter
 );
 
 //====================================================================================
-// 1. Fetch阶段：指令预取与PC管理
-//==================================================================================== 
-//wire [31:0] PC;             //当前PC—�?�fetch阶段的pc
-wire [31:0] PC_next;        //下一条PC
-wire [31:0] IF_ID_pc;       //存入IF-ID流水线的pc—�?�decode阶段的pc
-wire [31:0] IF_ID_inst;     //存入IF-ID流水线的指令—�?�decode阶段的指�?
-wire        branch_taken;   //跳转标识
-wire        Load_bubble;
+// 1. Fetch Stage: Instruction Fetch and PC Management
+//====================================================================================
+wire [31:0] PC_next;        // Next PC value
+wire [31:0] IF_ID_pc;       // PC to decode stage
+wire [31:0] IF_ID_inst;     // Instruction to decode stage
+wire        branch_taken;   // Branch taken signal
+wire        Load_bubble;    // Load hazard detection
 
 fetch myfetch (
   .CLK             (HCLK),
@@ -83,32 +81,34 @@ fetch myfetch (
 );
 
 //====================================================================================
-// 2. Decode阶段：寄存器读取与指令译�?
+// 2. Decode Stage: Register Read and Instruction Decode
 //====================================================================================
-wire [31:0] ID_EX_pc;       //存入ID-EX流水线的pc—�?�decode阶段的pc
-wire [31:0] ID_EX_inst;     //存入ID-EX流水线的指令—�?�decode阶段的指�?
-wire [31:0] ID_EX_rs1;      //存入ID-EX流水线的rs1的�??
-wire [31:0] ID_EX_rs2;      //存入ID-EX流水线的rs2的�??
-wire [ 4:0] ID_EX_rd;       //存入ID-EX流水线的rd的地�?
-wire [31:0] ID_EX_imm;      //存入ID-EX流水线的立即�?
-wire [31:0] ID_EX_alu;      //返回ID-EX流水线的alu模块计算结果—�?�数据前推需�?
-wire        ID_EX_is_jalr;  //存入ID-EX流水线的JALR标志
-wire        ID_EX_is_jal;   //存入ID-EX流水线的JAL标志
-wire        ID_EX_is_sys;   //存入ID-EX流水线的SYS标志
-wire        ID_EX_is_branch;//存入ID-EX流水线的跳转标志
-wire [31:0] load_data;
-wire        rs2_Flag;
+wire [31:0] ID_EX_pc;       // PC to execute stage
+wire [31:0] ID_EX_inst;     // Instruction to execute stage
+wire [31:0] ID_EX_rs1;      // RS1 value to execute stage
+wire [31:0] ID_EX_rs2;      // RS2 value to execute stage
+wire [ 4:0] ID_EX_rd;       // Destination register to execute stage
+wire [31:0] ID_EX_imm;      // Immediate value to execute stage
+wire [31:0] ID_EX_alu;      // ALU result for forwarding
+wire        ID_EX_is_jalr;  // JALR instruction flag
+wire        ID_EX_is_jal;   // JAL instruction flag
+wire        ID_EX_is_sys;   // System instruction flag
+wire        ID_EX_is_branch;// Branch instruction flag
+wire [31:0] load_data;      // Load data from memory
+wire        rs2_Flag;       // RS2 forwarding flag
 
-reg  [31:0] REGS [31:0];    //cpu内部的file register
+// CPU register file
+reg  [31:0] REGS [31:0];
 integer i;
-initial for (i = 0; i != 32; i = i + 1) REGS[i] = 0;//初始�?
+initial for (i = 0; i != 32; i = i + 1) REGS[i] = 0;  // Initialize registers
 
+// Register read ports
 reg  [31:0] rs1;
 reg  [31:0] rs2;
 always @(*) begin
-  rs1 = REGS[IF_ID_inst[19:15]];
-  rs2 = REGS[IF_ID_inst[24:20]];
-end                             //取出当前指令对应的rs1和rs2的地�?
+  rs1 = REGS[IF_ID_inst[19:15]];  // Read RS1
+  rs2 = REGS[IF_ID_inst[24:20]];  // Read RS2
+end
 
 decode mydecode (
   .CLK            (HCLK),
@@ -139,24 +139,24 @@ decode mydecode (
 );
 
 //====================================================================================
-// 3. Execute阶段：运算与跳转
+// 3. Execute Stage: Arithmetic Operations and Branching
 //====================================================================================
-wire [31:0] EX_MEM_pc;            //存入EX-MEM流水线的pc—�?�execute阶段的pc
-wire [31:0] EX_MEM_inst;          //存入EX-MEM流水线的指令—�?�execute阶段的指�?
-wire [31:0] EX_MEM_alu;           //存入EX-MEM流水线的alu模块计算结果
-wire [31:0] EX_MEM_rs2;           //存入EX-MEM流水线的rs2的�??
-wire [ 4:0] EX_MEM_rd;            //存入EX-MEM流水线的rd的地�?
-wire        EX_MEM_is_load;       //存入EX-MEM流水线的读取标志
-wire        EX_MEM_is_store;      //存入EX-MEM流水线的写入标志
-wire        EX_MEM_is_jalr;       //存入EX-MEM流水线的JALR标志
-wire        EX_MEM_is_jal;        //存入EX-MEM流水线的JAL标志
-wire        EX_MEM_is_sys;        //存入EX-MEM流水线的SYS标志
-wire [31:0] EX_MEM_csr_data;      //存入EX-MEM流水线的系统指令的�??
-wire        branch_cond_taken;    //存入EX-MEM流水线的b型指令判断成功标�?
-wire        forward_rs1_L_1;      //数据前推信号-与读写有关的情况-�?级标�?
-wire        forward_rs1_L_2;      //数据前推信号-与读写有关的情况-二级标志
-wire [31:0] forward_rs1_L_1_datai;//数据前推信号-与读写有关的情况-�?级数�?
-wire [31:0] forward_rs1_L_2_datai;//数据前推信号-与读写有关的情况-二级数据
+wire [31:0] EX_MEM_pc;            // PC to memory stage
+wire [31:0] EX_MEM_inst;          // Instruction to memory stage
+wire [31:0] EX_MEM_alu;           // ALU result to memory stage
+wire [31:0] EX_MEM_rs2;           // RS2 value to memory stage
+wire [ 4:0] EX_MEM_rd;            // Destination register to memory stage
+wire        EX_MEM_is_load;       // Load instruction flag
+wire        EX_MEM_is_store;      // Store instruction flag
+wire        EX_MEM_is_jalr;       // JALR instruction flag
+wire        EX_MEM_is_jal;        // JAL instruction flag
+wire        EX_MEM_is_sys;        // System instruction flag
+wire [31:0] EX_MEM_csr_data;      // CSR data to memory stage
+wire        branch_cond_taken;    // Branch condition evaluation
+wire        forward_rs1_L_1;      // Load forwarding level 1
+wire        forward_rs1_L_2;      // Load forwarding level 2
+wire [31:0] forward_rs1_L_1_datai;// Load forwarding data level 1
+wire [31:0] forward_rs1_L_2_datai;// Load forwarding data level 2
 
 execute myexecute (
   .CLK                   (HCLK),
@@ -200,13 +200,13 @@ execute myexecute (
 );
 
 //====================================================================================
-// 4. Memory阶段：数据访�?
+// 4. Memory Stage: Data Memory Access
 //====================================================================================
-wire [31:0] MEM_WB_pc;  //存入MEM-WB流水线的pc—�?�memory阶段的pc
-wire [31:0] MEM_WB_inst;//存入MEM-WB流水线的指令—�?�memory阶段的指�?
-wire [31:0] MEM_WB_alu; //存入MEM-WB流水线的alu模块计算结果
-wire [ 4:0] MEM_WB_rd;  //存入MEM-WB流水线的rd的地�?
-wire [31:0] MEM_WB_data;//存入MEM-WB流水线的写回数据
+wire [31:0] MEM_WB_pc;    // PC to writeback stage
+wire [31:0] MEM_WB_inst;  // Instruction to writeback stage
+wire [31:0] MEM_WB_alu;   // ALU result to writeback stage
+wire [ 4:0] MEM_WB_rd;    // Destination register to writeback stage
+wire [31:0] MEM_WB_data;  // Data to writeback stage
 
 memory mymemory (
   .CLK                   (HCLK),
@@ -244,9 +244,9 @@ memory mymemory (
 );
 
 //====================================================================================
-// 5. Writeback阶段：寄存器写回
+// 5. Writeback Stage: Register Write Back
 //====================================================================================
-wire [31:0] REGS_MEM_WB_rd;
+wire [31:0] REGS_MEM_WB_rd;  // Data to write to register file
 
 writeback mywriteback (
   .CLK           (HCLK),
@@ -260,10 +260,10 @@ writeback mywriteback (
   .REGS_MEM_WB_rd(REGS_MEM_WB_rd)
 );
 
-// 将文件寄存器数组中的 x31 值直接导�?
+// Export register x31 for external display
 assign REGS_X31 = REGS[31];
 
-//根据指令写回file register
+// Register file write back
 always @(negedge HCLK) begin
   if (HRESETn && MEM_WB_rd != 0) begin
     case (MEM_WB_inst[6:0])

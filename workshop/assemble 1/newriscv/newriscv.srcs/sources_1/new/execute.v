@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
-//========================================
-// 3. Execute阶段：运算与跳转
-//========================================
+
+// RISC-V instruction opcodes
 `define LUI     7'b0110111
 `define AUIPC   7'b0010111
 `define JAL     7'b1101111
@@ -86,7 +85,7 @@ assign forward_rs1_L_2       = forward_rs1_l_2;
 assign forward_rs1_L_1_datai = forward_rs1_l_1_datai;
 assign forward_rs1_L_2_datai = forward_rs1_l_2_datai;
 
-//ALU操作
+// ALU input selection with forwarding
 wire [31:0] alu_in1 = forward_rs1_l_1 ? forward_rs1_l_1_datai : forward_rs1_l_2 ? forward_rs1_l_2_datai : ID_EX_rs1;
 wire [31:0] alu_in2 = (ID_EX_inst[6:0] == `MCC   || 
                        ID_EX_inst[6:0] == `LUI   || 
@@ -97,6 +96,7 @@ wire [31:0] alu_in2 = (ID_EX_inst[6:0] == `MCC   ||
 reg [31:0] alu_result;
 wire is_sub = ((ID_EX_inst[31:25] == 7'b0100000)&&(ID_EX_inst[6:0] == `RCC));
 
+// ALU operations
 always @(*) begin
     if (ID_EX_inst != 0) begin
         case (ID_EX_inst[14:12])
@@ -110,19 +110,13 @@ always @(*) begin
             3'b111: alu_result = alu_in1 & alu_in2;
         endcase
     end
-    if (ID_EX_inst[6:0] == `LUI) alu_result = alu_in2;
-    if (ID_EX_inst[6:0] == `AUIPC) alu_result = ID_EX_pc + alu_in2;
+    // Special cases for specific instructions
+    if (ID_EX_inst[6:0] == `LUI)                                alu_result = alu_in2;
+    if (ID_EX_inst[6:0] == `AUIPC)                              alu_result = ID_EX_pc + alu_in2;
     if ((ID_EX_inst[6:0] == `SCC) || (ID_EX_inst[6:0] == `LCC)) alu_result = alu_in1 + alu_in2;
 end
 
-//b型分支条件判断
-/*wire beq_taken  = (forward_rs1_l_1 || forward_rs1_l_2) ? (alu_in1 == ID_EX_rs2) : (ID_EX_rs1 == ID_EX_rs2);
-wire bne_taken  = (forward_rs1_l_1 || forward_rs1_l_2) ? (alu_in1 != ID_EX_rs2) : (ID_EX_rs1 != ID_EX_rs2);
-wire blt_taken  = (forward_rs1_l_1 || forward_rs1_l_2) ? ($signed(alu_in1) <  $signed(ID_EX_rs2)) : ($signed(ID_EX_rs1) <  $signed(ID_EX_rs2));
-wire bge_taken  = (forward_rs1_l_1 || forward_rs1_l_2) ? ($signed(alu_in1) >=  $signed(ID_EX_rs2)) : ($signed(ID_EX_rs1) >= $signed(ID_EX_rs2));
-wire bltu_taken = (forward_rs1_l_1 || forward_rs1_l_2) ? (alu_in1 < ID_EX_rs2) : (ID_EX_rs1 <  ID_EX_rs2);
-wire bgeu_taken = (forward_rs1_l_1 || forward_rs1_l_2) ? (alu_in1 >= ID_EX_rs2) : (ID_EX_rs1 >= ID_EX_rs2);*/
-
+// Branch condition evaluation
 wire beq_taken  = rs2_Flag ? (ID_EX_rs1 == load_data) : forward_rs1_l_2 ? (alu_in1 == ID_EX_rs2) : (ID_EX_rs1 == ID_EX_rs2);
 wire bne_taken  = rs2_Flag ? (ID_EX_rs1 != load_data) : forward_rs1_l_2 ? (alu_in1 != ID_EX_rs2) : (ID_EX_rs1 != ID_EX_rs2);
 wire blt_taken  = rs2_Flag ? ($signed(ID_EX_rs1) <  $signed(load_data)) : forward_rs1_l_2 ? ($signed(alu_in1) <  $signed(ID_EX_rs2)) : ($signed(ID_EX_rs1) <  $signed(ID_EX_rs2));
@@ -130,7 +124,7 @@ wire bge_taken  = rs2_Flag ? ($signed(ID_EX_rs1) >= $signed(load_data)) : forwar
 wire bltu_taken = rs2_Flag ? (ID_EX_rs1 <  load_data) : forward_rs1_l_2 ? (alu_in1 <  ID_EX_rs2) : (ID_EX_rs1 <  ID_EX_rs2);
 wire bgeu_taken = rs2_Flag ? (ID_EX_rs1 >= load_data) : forward_rs1_l_2 ? (alu_in1 >= ID_EX_rs2) : (ID_EX_rs1 >= ID_EX_rs2);
 
-//综合分支跳转条件
+// Combined branch condition
 assign branch_cond_taken = 
        ((ID_EX_inst != 0) &&
        ((ID_EX_inst[14:12] == 3'b000 && beq_taken)  ||  
@@ -140,46 +134,46 @@ assign branch_cond_taken =
         (ID_EX_inst[14:12] == 3'b110 && bltu_taken) || 
         (ID_EX_inst[14:12] == 3'b111 && bgeu_taken)));   
 
-//JALR跳转地址处理
+// JALR target address calculation
 wire [31:0] jalr_target = (alu_in1 + ID_EX_imm); 
 
-//跳转目标地址选择
+// Branch target selection
 wire [31:0] branch_target = ID_EX_is_jalr ? jalr_target : (ID_EX_pc + ID_EX_imm - 4);
 
 reg branch_taken_buffer;
 reg branch_taken_buffer2;
 
+// Branch taken logic
 always @(*) begin
     if ((branch_taken_buffer || branch_taken_buffer2 ) == 1)   branch_taken_reg = 0;
-    else branch_taken_reg = (ID_EX_is_jalr || ID_EX_is_jal) || 
-                            (ID_EX_is_branch && branch_cond_taken);
+    else                                                       branch_taken_reg = (ID_EX_is_jalr || ID_EX_is_jal) || (ID_EX_is_branch && branch_cond_taken);
 end
 
-//系统指令处理
+// System instruction handling
 always @(*) begin
     if (ID_EX_is_sys) begin
         case (ID_EX_inst[31:20])
-            12'h302: ex_mem_csr_data = 0;
+            12'h302: ex_mem_csr_data = 0;  // CSR handling placeholder
             default: ex_mem_csr_data = 0;
         endcase
-    end else begin
-        ex_mem_csr_data = 0;
-    end
+    end 
+    else ex_mem_csr_data = 0;
 end
 
-//更新pc的逻辑
+// Next PC calculation
 always @(*) begin
-    if(!RES) pc_next=32'h0000_0004;
-    else pc_next = branch_taken ? branch_target : Load_bubble ? PC : PC + 4;
+    if(!RES) pc_next = 32'h0000_0004;
+    else     pc_next = branch_taken ? branch_target : Load_bubble ? PC : PC + 4;
 end
 
-//产生读写数据前推信号的逻辑
-reg forward_rs1_l_1,forward_rs1_l_2;
+// Load data forwarding logic
+reg        forward_rs1_l_1,forward_rs1_l_2;
 reg [31:0] DATAI_buffer;
 reg [31:0] forward_rs1_l_1_datai;
 reg [31:0] forward_rs1_l_2_datai;
 
 always @(*) begin
+    // Forwarding conditions
     forward_rs1_l_1 = ((ID_EX_inst[6:0] != `JAL)   && 
                        (ID_EX_inst[6:0] != `LUI)   && 
                        (ID_EX_inst[6:0] != `AUIPC) &&
@@ -192,19 +186,22 @@ always @(*) begin
                        (MEM_WB_inst[6:0] == `LCC)  &&
                        (ID_EX_inst[19:15] == MEM_WB_inst[11:7]));
 
-    if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b000)) forward_rs1_l_1_datai = {{24{HRDATA_D[7]}}, HRDATA_D[7:0]};
+    // Data forwarding from EX/MEM stage with sign extension
+    if      ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b000)) forward_rs1_l_1_datai = {{24{HRDATA_D[7]}}, HRDATA_D[7:0]};
     else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b001)) forward_rs1_l_1_datai = {{16{HRDATA_D[15]}}, HRDATA_D[15:0]};
     else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b010)) forward_rs1_l_1_datai = HRDATA_D;
     else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b100)) forward_rs1_l_1_datai = {{24{1'b0}}, HRDATA_D[7:0]};
     else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b101)) forward_rs1_l_1_datai = {{16{1'b0}}, HRDATA_D[15:0]};
     
-    if ((MEM_WB_inst[6:0] == `LCC) && (MEM_WB_inst[14:12] == 3'b000)) forward_rs1_l_2_datai = {{24{DATAI_buffer[7]}}, DATAI_buffer[7:0]};
+    // Data forwarding from MEM/WB stage with sign extension
+    if      ((MEM_WB_inst[6:0] == `LCC) && (MEM_WB_inst[14:12] == 3'b000)) forward_rs1_l_2_datai = {{24{DATAI_buffer[7]}}, DATAI_buffer[7:0]};
     else if ((MEM_WB_inst[6:0] == `LCC) && (MEM_WB_inst[14:12] == 3'b001)) forward_rs1_l_2_datai = {{16{DATAI_buffer[15]}}, DATAI_buffer[15:0]};
     else if ((MEM_WB_inst[6:0] == `LCC) && (MEM_WB_inst[14:12] == 3'b010)) forward_rs1_l_2_datai = DATAI_buffer;
     else if ((MEM_WB_inst[6:0] == `LCC) && (MEM_WB_inst[14:12] == 3'b100)) forward_rs1_l_2_datai = {{24{1'b0}}, DATAI_buffer[7:0]};
     else if ((MEM_WB_inst[6:0] == `LCC) && (MEM_WB_inst[14:12] == 3'b101)) forward_rs1_l_2_datai = {{16{1'b0}}, DATAI_buffer[15:0]};
 end
 
+// Pipeline register updates
 always @(posedge CLK) begin
     ex_mem_pc       <= ID_EX_pc;
     ex_mem_inst     <= ID_EX_inst;
