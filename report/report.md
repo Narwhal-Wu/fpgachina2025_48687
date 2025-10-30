@@ -661,9 +661,9 @@ end
 
 **优化实施：**
 
-根据LLM的建议，在pass_22版本中调整了前递优先级：
+根据LLM的建议，调整了前递优先级：
 
-**优化前代码（pass_19）：**
+**优化前代码：**
 ```verilog
 always @(*) begin
     if       (forward_rs1_EX)     id_ex_rs1_1 = ID_EX_alu;
@@ -676,7 +676,7 @@ always @(*) begin
 end
 ```
 
-**优化后代码（pass_22）：**
+**优化后代码：**
 ```verilog
 always @(*) begin
     if            (forward_rs1_MEM)    id_ex_rs1_1 = EX_MEM_alu;  // 优先MEM
@@ -758,14 +758,14 @@ assign branch_taken = branch_taken_reg;
 
 **代码改进：**
 
-在pass_31版本中实施了该优化：
+实施了该优化：
 
 ```verilog
-// 优化前代码（pass_27）
+// 优化前代码
 assign branch_taken = (ID_EX_is_jalr || ID_EX_is_jal) || 
                       (is_branch && branch_cond_taken);
 
-// 优化后代码（pass_31）
+// 优化后代码
 reg branch_taken_reg;
 reg branch_taken_buffer;
 reg branch_taken_buffer2;
@@ -860,13 +860,13 @@ wire [31:0] alu_in1 = forward_rs1_L_1 ? load_forward_data :
 
 **代码改进：**
 
-在pass_37版本中实现了Load数据前递优化，大幅提升了流水线效率：
+实现了Load数据前递优化，大幅提升了流水线效率：
 
 ```verilog
-// 优化前（pass_31）：遇到Load-Use冒险时插入气泡，性能损失较大
+// 优化前：遇到Load-Use冒险时插入气泡，性能损失较大
 // decode.v中的Load-Use检测会暂停流水线
 
-// 优化后（pass_37）：在Execute模块中实现Load数据前递
+// 优化后：在Execute模块中实现Load数据前递
 // execute.v新增代码：
 reg forward_rs1_l_1, forward_rs1_l_2;
 reg [31:0] DATAI_buffer;
@@ -1184,9 +1184,9 @@ if ((EX_MEM_rd == IF_ID_inst[19:15]) && (EX_MEM_rd != 0) &&
 
 **问题解决：**
 
-在pass_22版本中实施了该修复：
+实施了该修复：
 
-**修改前（pass_19）：**
+**修改前：**
 ```verilog
 always @(*) begin
     if ((ID_EX_rd == IF_ID_inst[19:15]) && (ID_EX_rd != 0) && 
@@ -1201,7 +1201,7 @@ always @(*) begin
 end
 ```
 
-**修改后（pass_22）：**
+**修改后：**
 ```verilog
 always @(*) begin
     if ((ID_EX_rd == IF_ID_inst[19:15]) && (ID_EX_rd != 0) && 
