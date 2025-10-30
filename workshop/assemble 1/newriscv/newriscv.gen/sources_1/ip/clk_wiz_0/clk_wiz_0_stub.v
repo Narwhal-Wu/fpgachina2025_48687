@@ -2,10 +2,10 @@
 // Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2023.2 (win64) Build 4029153 Fri Oct 13 20:14:34 MDT 2023
-// Date        : Sat Oct 25 21:16:58 2025
-// Host        : LAPTOP-N8FCCN37 running 64-bit major release  (build 9200)
-// Command     : write_verilog -force -mode synth_stub {d:/M/nk/verilog/openRV/myq/LibreCore/workshop/assemble
-//               1/newriscv/newriscv.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_stub.v}
+// Date        : Fri Oct 24 19:22:37 2025
+// Host        : lsh running 64-bit major release  (build 9200)
+// Command     : write_verilog -force -mode synth_stub -rename_top clk_wiz_0 -prefix
+//               clk_wiz_0_ clk_wiz_0_stub.v
 // Design      : clk_wiz_0
 // Purpose     : Stub declaration of top-level module interface
 // Device      : xc7a100tcsg324-1

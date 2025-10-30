@@ -1009,9 +1009,9 @@ wire [31:0] branch_target = ID_EX_is_jalr ? jalr_target : (ID_EX_pc + ID_EX_imm)
 
 **代码改进：**
 
-对比初赛版本和当前版本的execute.v模块代码注释：
+对比之前版本和当前版本的execute.v模块代码注释：
 
-**改进前（初赛版本）：**
+**改进前（之前版本）：**
 ```verilog
 //========================================
 // 3. Execute阶段：运算与跳转
@@ -1355,7 +1355,6 @@ end
 4. 流水线暂停机制：https://chat.deepseek.com/share/gcnb39bbjrch34fyfp
 5. 添加AHB端口设计：https://chat.deepseek.com/share/ce2z1uhq0m693m2xwn
 
-此外，在硬件验证阶段还发现并修复了寄存器写回逻辑的时序问题（详见4.3.2节），通过GitHub Copilot的建议，将寄存器写回从组合逻辑改为时钟下降沿触发，成功解决了仿真与实际硬件行为不一致的问题。
 
 ---
 
