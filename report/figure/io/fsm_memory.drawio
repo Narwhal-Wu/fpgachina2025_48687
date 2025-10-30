@@ -1,0 +1,56 @@
+<mxfile host="app.diagrams.net" modified="2025-10-30T00:00:00.000Z" agent="github-copilot" version="22.0.0">
+  <diagram id="memory-fsm" name="Memory FSM">
+    <mxGraphModel dx="960" dy="540" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1240" pageHeight="880">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- States -->
+        <mxCell id="m_idle" value="Idle" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="140" y="140" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="m_rreq" value="ReadReq\n(HTRANS=NONSEQ)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="80" width="160" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="m_wreq" value="WriteReq\n(HTRANS=NONSEQ)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="200" width="160" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="m_wait" value="WaitReady" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="600" y="140" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="m_commit" value="Commit\n(mem_wb_* update)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="820" y="130" width="180" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Edges -->
+        <mxCell id="e_idle_rreq" value="EX_MEM_is_load" style="endArrow=block;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="m_idle" target="m_rreq">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_idle_wreq" value="EX_MEM_is_store" style="endArrow=block;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="m_idle" target="m_wreq">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_idle_idle" value="otherwise stay" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#a6a6a6;" edge="1" parent="1" source="m_idle" target="m_idle">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="e_rreq_wait" value="request placed" style="endArrow=block;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1" source="m_rreq" target="m_wait">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_wreq_wait" value="request placed" style="endArrow=block;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1" source="m_wreq" target="m_wait">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="e_wait_commit" value="HREADY_D" style="endArrow=block;html=1;rounded=0;strokeColor=#b85450;" edge="1" parent="1" source="m_wait" target="m_commit">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_wait_wait" value="!HREADY_D" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#a6a6a6;" edge="1" parent="1" source="m_wait" target="m_wait">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="e_commit_idle" value="done" style="endArrow=block;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="m_commit" target="m_idle">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,65 @@
+<mxfile host="app.diagrams.net" modified="2025-10-30T00:00:00.000Z" agent="github-copilot" version="22.0.0">
+  <diagram id="fetch-fsm" name="Fetch FSM">
+    <mxGraphModel dx="960" dy="540" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1240" pageHeight="880">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- States -->
+        <mxCell id="s_idle" value="Idle" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_issue" value="IssueReq\n(HTRANS=NONSEQ)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="320" y="110" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_wait" value="WaitReady" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="560" y="120" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_accept" value="Accept\n(IF_ID_inst<=HRDATA_I)\n(PC<=PC_next)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="780" y="110" width="180" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_bubble" value="Bubble\n(IF_ID_inst<=NOP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="560" y="240" width="160" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_flush" value="Flush\n(PC<=PC_next, IF_ID_inst<=NOP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cfe2f3;strokeColor=#6fa8dc;" vertex="1" parent="1">
+          <mxGeometry x="560" y="20" width="200" height="70" as="geometry"/>
+        </mxCell>
+        
+        <!-- Edges -->
+        <mxCell id="e_idle_issue" value="valid_trans\n(RES && !branch_taken && !Load_bubble)" style="endArrow=block;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="s_idle" target="s_issue">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_idle_idle" value="!valid_trans" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#a6a6a6;" edge="1" parent="1" source="s_idle" target="s_idle">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="120" y="220" as="targetPoint"/></mxGeometry>
+        </mxCell>
+        
+        <mxCell id="e_issue_wait" value="request placed" style="endArrow=block;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1" source="s_issue" target="s_wait">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="e_wait_flush" value="branch_taken" style="endArrow=block;html=1;rounded=0;strokeColor=#6fa8dc;" edge="1" parent="1" source="s_wait" target="s_flush">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_wait_bubble" value="Load_bubble" style="endArrow=block;html=1;rounded=0;strokeColor=#9673a6;" edge="1" parent="1" source="s_wait" target="s_bubble">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_wait_accept" value="HREADY_I && !branch_taken && !Load_bubble" style="endArrow=block;html=1;rounded=0;strokeColor=#b85450;" edge="1" parent="1" source="s_wait" target="s_accept">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_wait_wait" value="!HREADY_I" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#a6a6a6;" edge="1" parent="1" source="s_wait" target="s_wait">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="e_accept_idle" value="update done" style="endArrow=block;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="s_accept" target="s_idle">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_bubble_idle" value="one cycle later" style="endArrow=block;html=1;rounded=0;strokeColor=#9673a6;" edge="1" parent="1" source="s_bubble" target="s_idle">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_flush_idle" value="after redirect" style="endArrow=block;html=1;rounded=0;strokeColor=#6fa8dc;" edge="1" parent="1" source="s_flush" target="s_idle">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

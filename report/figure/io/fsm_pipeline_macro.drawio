@@ -1,0 +1,54 @@
+<mxfile host="app.diagrams.net" modified="2025-10-30T00:00:00.000Z" agent="github-copilot" version="22.0.0">
+  <diagram id="pipeline-macro-fsm" name="Pipeline Macro FSM">
+    <mxGraphModel dx="960" dy="540" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1240" pageHeight="880">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Macro States -->
+        <mxCell id="p_run" value="Running" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="180" y="150" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="p_stall_if" value="Stalled_IF\n(!HREADY_I)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="420" y="60" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="p_stall_mem" value="Stalled_MEM\n(!HREADY_D)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="420" y="240" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="p_flush" value="Flush\n(branch_taken)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cfe2f3;strokeColor=#6fa8dc;" vertex="1" parent="1">
+          <mxGeometry x="700" y="60" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="p_bubble" value="Bubble\n(Load_bubble)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="700" y="240" width="160" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Edges -->
+        <mxCell id="e_run_stall_if" value="!HREADY_I" style="endArrow=block;html=1;rounded=0;strokeColor=#d6b656;" edge="1" parent="1" source="p_run" target="p_stall_if">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_run_stall_mem" value="!HREADY_D" style="endArrow=block;html=1;rounded=0;strokeColor=#d6b656;" edge="1" parent="1" source="p_run" target="p_stall_mem">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_run_flush" value="branch_taken" style="endArrow=block;html=1;rounded=0;strokeColor=#6fa8dc;" edge="1" parent="1" source="p_run" target="p_flush">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_run_bubble" value="Load_bubble" style="endArrow=block;html=1;rounded=0;strokeColor=#9673a6;" edge="1" parent="1" source="p_run" target="p_bubble">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="e_stall_if_run" value="HREADY_I" style="endArrow=block;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1" source="p_stall_if" target="p_run">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_stall_mem_run" value="HREADY_D" style="endArrow=block;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1" source="p_stall_mem" target="p_run">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_flush_run" value="redirect done" style="endArrow=block;html=1;rounded=0;strokeColor=#6fa8dc;" edge="1" parent="1" source="p_flush" target="p_run">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_bubble_run" value="one cycle later" style="endArrow=block;html=1;rounded=0;strokeColor=#9673a6;" edge="1" parent="1" source="p_bubble" target="p_run">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

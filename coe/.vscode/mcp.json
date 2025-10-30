@@ -1,0 +1,44 @@
+{
+  // =============================
+  // GitHub Copilot MCP 配置文件
+  // 用于让 Copilot Chat 访问 riscv-tests 文件夹中的数据
+  // =============================
+
+  "servers": {
+    // 👇 这是你定义的 MCP 服务器名称
+    // Copilot Chat 中会显示为 “RiscvTests” 工具
+    "RiscvTests": {
+      // -----------------------------
+      // 指定 MCP Server 类型
+      // stdio 表示通过本地命令行启动一个进程通信
+      // -----------------------------
+      "type": "stdio",
+
+      // -----------------------------
+      // 启动命令
+      // 使用 npx 启动官方的文件系统 MCP 服务器
+      // -----------------------------
+      "command": "npx",
+
+      // -----------------------------
+      // 启动参数：指定服务器类型
+      // “@modelcontextprotocol/server-filesystem” 是官方提供的文件读取工具
+      // 它允许 Copilot 读取指定目录下的文件
+      // -----------------------------
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem"
+      ],
+
+      // -----------------------------
+      // 环境变量
+      // ROOT 用于指定文件系统 MCP 服务器的根目录
+      // 这里设置为 riscv-tests 文件夹（相对路径）
+      // ${workspaceFolder} 会自动替换为当前 VS Code 工作区路径
+      // -----------------------------
+      "env": {
+        "ROOT": "${workspaceFolder}/riscv-tests"
+      }
+    }
+  }
+}
