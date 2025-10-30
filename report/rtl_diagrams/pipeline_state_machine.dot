@@ -1,0 +1,54 @@
+digraph pipeline_state_machine {
+    rankdir=TB;
+    node [shape=rectangle, style="rounded,filled", fontname="SimHei", fontsize=12];
+    edge [fontname="SimHei", fontsize=10];
+    
+    // Set graph attributes
+    graph [fontname="SimHei", fontsize=14, label="五级流水线CPU状态机模型\nPipeline CPU State Machine Model", labelloc=t];
+    
+    // Define states
+    RESET [label="RESET\n复位状态", fillcolor="#ff6b6b", fontcolor="white", penwidth=2];
+    IF [label="IF\n取指状态\n(Instruction Fetch)", fillcolor="#4ecdc4", penwidth=2];
+    ID [label="ID\n译码状态\n(Instruction Decode)", fillcolor="#45b7d1", penwidth=2];
+    EX [label="EX\n执行状态\n(Execute)", fillcolor="#96ceb4", penwidth=2];
+    MEM [label="MEM\n访存状态\n(Memory Access)", fillcolor="#ffeaa7", penwidth=2];
+    WB [label="WB\n写回状态\n(Write Back)", fillcolor="#dfe6e9", penwidth=2];
+    STALL [label="STALL\n暂停状态\n(Pipeline Stall)", fillcolor="#fdcb6e", penwidth=2, style="rounded,filled,dashed"];
+    FLUSH [label="FLUSH\n清空状态\n(Pipeline Flush)", fillcolor="#e17055", penwidth=2, style="rounded,filled,dashed"];
+    
+    // State transitions for normal flow
+    RESET -> IF [label="复位完成\nReset Done", color="#2d3436", penwidth=2];
+    IF -> ID [label="指令取出\nInstruction Fetched", color="#0984e3"];
+    ID -> EX [label="译码完成\nDecode Complete", color="#0984e3"];
+    EX -> MEM [label="执行完成\nExecution Complete", color="#0984e3"];
+    MEM -> WB [label="访存完成\nMemory Complete", color="#0984e3"];
+    WB -> IF [label="写回完成，取下一条\nWrite Back Done,\nFetch Next", color="#0984e3"];
+    
+    // Hazard handling
+    ID -> STALL [label="Load-Use冒险检测\nLoad-Use Hazard", color="#d63031", style="dashed"];
+    STALL -> ID [label="冒险解除\nHazard Resolved", color="#00b894", style="dashed"];
+    
+    // Branch handling
+    EX -> FLUSH [label="分支预测错误\nBranch Misprediction", color="#d63031", style="dashed"];
+    FLUSH -> IF [label="流水线清空完成\n跳转到目标地址\nFlush Complete,\nJump to Target", color="#00b894", style="dashed"];
+    
+    // Self loop for continuous operation
+    IF -> IF [label="PC暂停\n(Load-Use冒险)\nPC Stall", color="#636e72", style="dotted"];
+    
+    // Legend
+    subgraph cluster_legend {
+        label="图例 Legend";
+        fontname="SimHei";
+        style="filled,rounded";
+        fillcolor="#f8f9fa";
+        
+        node [shape=rectangle, style="rounded,filled"];
+        
+        legend_normal [label="正常流水线状态\nNormal Pipeline State", fillcolor="#4ecdc4", fontname="SimHei"];
+        legend_hazard [label="冒险处理状态\nHazard Handling State", fillcolor="#fdcb6e", style="rounded,filled,dashed", fontname="SimHei"];
+        legend_reset [label="复位状态\nReset State", fillcolor="#ff6b6b", fontcolor="white", fontname="SimHei"];
+        
+        legend_normal -> legend_hazard [style="invis"];
+        legend_hazard -> legend_reset [style="invis"];
+    }
+}
