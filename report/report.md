@@ -1503,6 +1503,8 @@ OpenRV\LibreCore\workshop\assemble 1\newriscv\vivado simulation wave.png
 | DSP      | 0      | 0     | 0     |
 | IO       | 44     | 210   | 20.95%|
 
+![资源使用情况](vivado综合实现结果/资源使用情况.png)
+
 ### 6.2 时序性能报告
 
 时钟频率为80MHZ时：
@@ -1511,12 +1513,16 @@ OpenRV\LibreCore\workshop\assemble 1\newriscv\vivado simulation wave.png
 | 建立时间 | 0     | 0.124ns | 0.124ns |
 | 保持时间 | 0     | 0.019ns | 0.019ns |
 
+![时序分析情况](vivado综合实现结果/时序分析情况.png)
+
 ### 6.3 功耗分析
 
 | 功耗类型 | 功耗值 |
 | 静态功耗 | 0.098W |
 | 动态功耗 | 0.157W |
 | 总功耗   | 0.255W |
+
+![功耗情况](vivado综合实现结果/功耗情况.png)
 
 ---
 
