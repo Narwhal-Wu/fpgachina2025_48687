@@ -976,100 +976,133 @@ end
 
 ### 4.2 实现阶段LLM辅助
 
-#### 4.2.1 分支跳转控制逻辑优化
+#### 4.2.1 Load指令数据前递优化
 
-**优化目标：** 解决分支指令重复执行问题
+**优化目标：** 实现Load指令结果的直接前递，减少流水线停顿
 
 **用户输入：**
 
 ```
-在我的五级流水线CPU实现中，遇到了一个分支跳转的问题。当执行分支跳转指令（如JAL、JALR、BEQ等）时，
-branch_taken信号会在Execute阶段产生，用于控制PC跳转到目标地址。
+在我的五级流水线CPU中，当前的数据前递机制可以处理ALU指令的结果前递，
+但对于Load指令的处理还不够完善。
 
-但我发现在某些情况下，分支跳转会被执行多次，导致PC跳转到错误的地址。
-仿真波形显示branch_taken信号会持续多个周期为高，而不是只有一个周期。
+当前设计中，如果遇到Load-Use数据冒险（后续指令需要使用Load指令的结果），
+会在Decode阶段插入一个气泡（bubble）暂停流水线，等待Load指令的数据从
+内存读取完成后写回寄存器，然后再通过正常的前递机制获取数据。
 
-当前的branch_taken生成逻辑：
-```verilog
-assign branch_taken = (ID_EX_is_jalr || ID_EX_is_jal) || 
-                      (is_branch && branch_cond_taken);
-```
+这种方式虽然能保证正确性，但性能不够理想。请问是否可以优化，让Load指令
+的数据能够直接从MEM阶段前递到EX阶段，避免插入气泡？
 
-请帮我分析原因并提供解决方案。
+相关的Load指令包括：LB、LH、LW、LBU、LHU
 ```
 
 **LLM回答：**
 
 ```
-这是一个典型的流水线控制信号持续性问题。问题的根本原因是：
+是的，可以实现Load指令的直接数据前递，这是一个很好的性能优化。关键要点：
 
-1. **流水线延迟**：当分支指令在EX阶段产生branch_taken信号后，该指令还会继续
-   在流水线中前进到MEM阶段和WB阶段。
+1. **时序分析**：
+   - Load指令在MEM阶段从内存读取数据（DATAI信号）
+   - 后续指令在EX阶段需要使用这个数据
+   - 只要时序满足，可以直接将DATAI前递到EX阶段的ALU输入
 
-2. **信号持续**：由于ID_EX流水线寄存器中的跳转指令信息会保持多个周期，
-   导致branch_taken信号持续为高。
+2. **前递条件检测**：
+   需要检测以下条件来判断是否需要Load数据前递：
+   - EX/MEM阶段或MEM/WB阶段的指令是Load指令（opcode == 7'b0000011）
+   - 当前EX阶段指令的源寄存器与Load指令的目标寄存器相同
+   - 当前指令确实需要使用rs1（排除JAL、LUI、AUIPC等不使用rs1的指令）
 
-3. **重复跳转**：持续的branch_taken信号会导致PC多次更新，产生错误的跳转行为。
-
-解决方案：使用缓冲寄存器记录最近的分支历史，避免重复执行跳转
+3. **数据对齐处理**：
+   Load指令根据funct3字段有不同的数据大小和符号扩展：
+   - LB (000)：字节加载，符号扩展
+   - LH (001)：半字加载，符号扩展
+   - LW (010)：字加载
+   - LBU (100)：字节加载，零扩展
+   - LHU (101)：半字加载，零扩展
 
 实现建议：
 ```verilog
-reg branch_taken_buffer;
-reg branch_taken_buffer2;
-reg branch_taken_reg;
+// 在Execute模块中检测Load前递
+wire forward_rs1_L_1 = ((ID_EX_inst[6:0] != `JAL) && 
+                        (ID_EX_inst[6:0] != `LUI) && 
+                        (ID_EX_inst[6:0] != `AUIPC) &&
+                        (EX_MEM_inst[6:0] == `LCC) &&
+                        (ID_EX_inst[19:15] == EX_MEM_inst[11:7]));
 
-always @(*) begin
-    // 如果前两个周期已经执行过跳转，则抑制当前的跳转信号
-    if ((branch_taken_buffer || branch_taken_buffer2) == 1)   
-        branch_taken_reg = 0;
-    else 
-        branch_taken_reg = (ID_EX_is_jalr || ID_EX_is_jal) || 
-                          (is_branch && branch_cond_taken);
-end
+// 根据Load类型处理数据
+wire [31:0] load_forward_data;
+assign load_forward_data = 
+    (EX_MEM_inst[14:12] == 3'b000) ? {{24{DATAI[7]}}, DATAI[7:0]} :   // LB
+    (EX_MEM_inst[14:12] == 3'b001) ? {{16{DATAI[15]}}, DATAI[15:0]} : // LH
+    (EX_MEM_inst[14:12] == 3'b010) ? DATAI :                           // LW
+    (EX_MEM_inst[14:12] == 3'b100) ? {{24{1'b0}}, DATAI[7:0]} :       // LBU
+    (EX_MEM_inst[14:12] == 3'b101) ? {{16{1'b0}}, DATAI[15:0]} :      // LHU
+    32'h0;
 
-always @(posedge CLK) begin
-    branch_taken_buffer <= branch_taken;
-    branch_taken_buffer2 <= branch_taken_buffer;
-end
-
-assign branch_taken = branch_taken_reg;
+// 在ALU输入选择中加入Load前递
+wire [31:0] alu_in1 = forward_rs1_L_1 ? load_forward_data : 
+                      forward_rs1_L_2 ? load_forward_data_wb : 
+                      ID_EX_rs1;
 ```
-
-这样可以确保每条分支指令只执行一次跳转。
 ```
 
 **代码改进：**
 
-实施了该优化：
+实现了Load数据前递优化，大幅提升了流水线效率：
 
 ```verilog
-// 优化前代码
-assign branch_taken = (ID_EX_is_jalr || ID_EX_is_jal) || 
-                      (is_branch && branch_cond_taken);
+// 优化前：遇到Load-Use冒险时插入气泡，性能损失较大
+// decode.v中的Load-Use检测会暂停流水线
 
-// 优化后代码
-reg branch_taken_reg;
-reg branch_taken_buffer;
-reg branch_taken_buffer2;
-
-always @(*) begin
-    if ((branch_taken_buffer || branch_taken_buffer2) == 1)   
-        branch_taken_reg = 0;
-    else 
-        branch_taken_reg = (ID_EX_is_jalr || ID_EX_is_jal) || 
-                          (is_branch && branch_cond_taken);
-end
+// 优化后：在Execute模块中实现Load数据前递
+// execute.v新增代码：
+reg forward_rs1_l_1, forward_rs1_l_2;
+reg [31:0] DATAI_buffer;
+reg [31:0] forward_rs1_l_1_datai;
+reg [31:0] forward_rs1_l_2_datai;
 
 always @(posedge CLK) begin
-    branch_taken_buffer <= branch_taken;
-    branch_taken_buffer2 <= branch_taken_buffer;
+    DATAI_buffer <= DATAI;  // 缓存MEM/WB阶段的数据
 end
 
-assign branch_taken = branch_taken_reg;
+always @(*) begin
+    // 检测EX/MEM阶段的Load前递需求
+    forward_rs1_l_1 = ((ID_EX_inst[6:0] != `JAL) && 
+                       (ID_EX_inst[6:0] != `LUI) && 
+                       (ID_EX_inst[6:0] != `AUIPC) &&
+                       (EX_MEM_inst[6:0] == `LCC) &&
+                       (ID_EX_inst[19:15] == EX_MEM_inst[11:7]));
+    
+    // 检测MEM/WB阶段的Load前递需求
+    forward_rs1_l_2 = ((ID_EX_inst[6:0] != `JAL) && 
+                       (ID_EX_inst[6:0] != `LUI) && 
+                       (ID_EX_inst[6:0] != `AUIPC) &&
+                       (MEM_WB_inst[6:0] == `LCC) &&
+                       (ID_EX_inst[19:15] == MEM_WB_inst[11:7]));
+    
+    // 处理不同Load类型的数据对齐和扩展
+    if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b000)) 
+        forward_rs1_l_1_datai = {{24{DATAI[7]}}, DATAI[7:0]};        // LB
+    else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b001)) 
+        forward_rs1_l_1_datai = {{16{DATAI[15]}}, DATAI[15:0]};      // LH
+    else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b010)) 
+        forward_rs1_l_1_datai = DATAI;                               // LW
+    else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b100)) 
+        forward_rs1_l_1_datai = {{24{1'b0}}, DATAI[7:0]};           // LBU
+    else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b101)) 
+        forward_rs1_l_1_datai = {{16{1'b0}}, DATAI[15:0]};          // LHU
+    
+    // 类似处理MEM/WB阶段的数据
+    // ...
+end
+
+// 修改ALU输入选择逻辑，加入Load前递路径
+wire [31:0] alu_in1 = forward_rs1_l_1 ? forward_rs1_l_1_datai : 
+                      forward_rs1_l_2 ? forward_rs1_l_2_datai : 
+                      ID_EX_rs1;
 ```
 
-该优化通过两级缓冲寄存器记录分支历史，有效防止了分支指令的重复执行，保证了程序控制流的正确性。
+该优化实现了Load指令结果的直接前递，避免了Load-Use冒险时的流水线气泡插入，显著提升了处理器的CPI（Cycles Per Instruction）性能。
 
 #### 4.2.2 时序优化
 
@@ -1315,135 +1348,9 @@ assign branch_cond_taken = (ID_EX_inst != 0) && (cond_01_23 || cond_4_5);
 - Worst Hold Slack (WHS): 0.019ns（勉强满足保持时间）
 - 这些裕量非常小，说明时序接近临界状态，为未来优化提供了明确的方向
 
-#### 4.2.3 Load指令数据前递优化
 
-**优化目标：** 实现Load指令结果的直接前递，减少流水线停顿
 
-**用户输入：**
-
-```
-在我的五级流水线CPU中，当前的数据前递机制可以处理ALU指令的结果前递，
-但对于Load指令的处理还不够完善。
-
-当前设计中，如果遇到Load-Use数据冒险（后续指令需要使用Load指令的结果），
-会在Decode阶段插入一个气泡（bubble）暂停流水线，等待Load指令的数据从
-内存读取完成后写回寄存器，然后再通过正常的前递机制获取数据。
-
-这种方式虽然能保证正确性，但性能不够理想。请问是否可以优化，让Load指令
-的数据能够直接从MEM阶段前递到EX阶段，避免插入气泡？
-
-相关的Load指令包括：LB、LH、LW、LBU、LHU
-```
-
-**LLM回答：**
-
-```
-是的，可以实现Load指令的直接数据前递，这是一个很好的性能优化。关键要点：
-
-1. **时序分析**：
-   - Load指令在MEM阶段从内存读取数据（DATAI信号）
-   - 后续指令在EX阶段需要使用这个数据
-   - 只要时序满足，可以直接将DATAI前递到EX阶段的ALU输入
-
-2. **前递条件检测**：
-   需要检测以下条件来判断是否需要Load数据前递：
-   - EX/MEM阶段或MEM/WB阶段的指令是Load指令（opcode == 7'b0000011）
-   - 当前EX阶段指令的源寄存器与Load指令的目标寄存器相同
-   - 当前指令确实需要使用rs1（排除JAL、LUI、AUIPC等不使用rs1的指令）
-
-3. **数据对齐处理**：
-   Load指令根据funct3字段有不同的数据大小和符号扩展：
-   - LB (000)：字节加载，符号扩展
-   - LH (001)：半字加载，符号扩展
-   - LW (010)：字加载
-   - LBU (100)：字节加载，零扩展
-   - LHU (101)：半字加载，零扩展
-
-实现建议：
-```verilog
-// 在Execute模块中检测Load前递
-wire forward_rs1_L_1 = ((ID_EX_inst[6:0] != `JAL) && 
-                        (ID_EX_inst[6:0] != `LUI) && 
-                        (ID_EX_inst[6:0] != `AUIPC) &&
-                        (EX_MEM_inst[6:0] == `LCC) &&
-                        (ID_EX_inst[19:15] == EX_MEM_inst[11:7]));
-
-// 根据Load类型处理数据
-wire [31:0] load_forward_data;
-assign load_forward_data = 
-    (EX_MEM_inst[14:12] == 3'b000) ? {{24{DATAI[7]}}, DATAI[7:0]} :   // LB
-    (EX_MEM_inst[14:12] == 3'b001) ? {{16{DATAI[15]}}, DATAI[15:0]} : // LH
-    (EX_MEM_inst[14:12] == 3'b010) ? DATAI :                           // LW
-    (EX_MEM_inst[14:12] == 3'b100) ? {{24{1'b0}}, DATAI[7:0]} :       // LBU
-    (EX_MEM_inst[14:12] == 3'b101) ? {{16{1'b0}}, DATAI[15:0]} :      // LHU
-    32'h0;
-
-// 在ALU输入选择中加入Load前递
-wire [31:0] alu_in1 = forward_rs1_L_1 ? load_forward_data : 
-                      forward_rs1_L_2 ? load_forward_data_wb : 
-                      ID_EX_rs1;
-```
-```
-
-**代码改进：**
-
-实现了Load数据前递优化，大幅提升了流水线效率：
-
-```verilog
-// 优化前：遇到Load-Use冒险时插入气泡，性能损失较大
-// decode.v中的Load-Use检测会暂停流水线
-
-// 优化后：在Execute模块中实现Load数据前递
-// execute.v新增代码：
-reg forward_rs1_l_1, forward_rs1_l_2;
-reg [31:0] DATAI_buffer;
-reg [31:0] forward_rs1_l_1_datai;
-reg [31:0] forward_rs1_l_2_datai;
-
-always @(posedge CLK) begin
-    DATAI_buffer <= DATAI;  // 缓存MEM/WB阶段的数据
-end
-
-always @(*) begin
-    // 检测EX/MEM阶段的Load前递需求
-    forward_rs1_l_1 = ((ID_EX_inst[6:0] != `JAL) && 
-                       (ID_EX_inst[6:0] != `LUI) && 
-                       (ID_EX_inst[6:0] != `AUIPC) &&
-                       (EX_MEM_inst[6:0] == `LCC) &&
-                       (ID_EX_inst[19:15] == EX_MEM_inst[11:7]));
-    
-    // 检测MEM/WB阶段的Load前递需求
-    forward_rs1_l_2 = ((ID_EX_inst[6:0] != `JAL) && 
-                       (ID_EX_inst[6:0] != `LUI) && 
-                       (ID_EX_inst[6:0] != `AUIPC) &&
-                       (MEM_WB_inst[6:0] == `LCC) &&
-                       (ID_EX_inst[19:15] == MEM_WB_inst[11:7]));
-    
-    // 处理不同Load类型的数据对齐和扩展
-    if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b000)) 
-        forward_rs1_l_1_datai = {{24{DATAI[7]}}, DATAI[7:0]};        // LB
-    else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b001)) 
-        forward_rs1_l_1_datai = {{16{DATAI[15]}}, DATAI[15:0]};      // LH
-    else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b010)) 
-        forward_rs1_l_1_datai = DATAI;                               // LW
-    else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b100)) 
-        forward_rs1_l_1_datai = {{24{1'b0}}, DATAI[7:0]};           // LBU
-    else if ((EX_MEM_inst[6:0] == `LCC) && (EX_MEM_inst[14:12] == 3'b101)) 
-        forward_rs1_l_1_datai = {{16{1'b0}}, DATAI[15:0]};          // LHU
-    
-    // 类似处理MEM/WB阶段的数据
-    // ...
-end
-
-// 修改ALU输入选择逻辑，加入Load前递路径
-wire [31:0] alu_in1 = forward_rs1_l_1 ? forward_rs1_l_1_datai : 
-                      forward_rs1_l_2 ? forward_rs1_l_2_datai : 
-                      ID_EX_rs1;
-```
-
-该优化实现了Load指令结果的直接前递，避免了Load-Use冒险时的流水线气泡插入，显著提升了处理器的CPI（Cycles Per Instruction）性能。
-
-#### 4.2.4 代码注释规范化优化
+#### 4.2.3 代码注释规范化优化
 
 **优化目标：** 提升代码可读性和国际化标准
 
@@ -1643,7 +1550,7 @@ wire [31:0] branch_target = ID_EX_is_jalr ? jalr_target : (ID_EX_pc + ID_EX_imm 
 3. 注释应该与代码保持同步更新，避免注释与实现不一致
 4. LLM可以快速帮助改进代码规范性，提升整体代码质量
 
-#### 4.2.5 代码优化
+#### 4.2.4 代码优化
 
 **优化目标：** 提升代码质量和性能
 
