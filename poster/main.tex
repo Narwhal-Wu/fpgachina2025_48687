@@ -1,0 +1,233 @@
+\documentclass[final]{beamer}
+\usepackage[orientation=portrait,size=a2,scale=1.0]{beamerposter}
+\usepackage{graphicx}
+\usepackage{fontspec}
+\usepackage{ragged2e}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage{colortbl}
+\usepackage{booktabs}
+
+% Font settings
+\setmainfont{Arial}
+\newfontfamily\titlefont{Arial}[Scale=2.5]
+\newfontfamily\subtitlefont{Arial}[Scale=1.5]
+
+% Color scheme
+\definecolor{myblue}{RGB}{0,70,140}
+\definecolor{mygray}{RGB}{240,240,240}
+\definecolor{mydarkblue}{RGB}{0,40,80}
+\definecolor{mylightblue}{RGB}{200,220,255}
+\definecolor{myaccent}{RGB}{255,140,0}
+
+% Beamer color settings
+\setbeamercolor{block title}{fg=white,bg=myblue}
+\setbeamercolor{block body}{fg=black,bg=mygray}
+\setbeamercolor{title}{fg=mydarkblue,bg=}
+\setbeamercolor{subtitle}{fg=myblue,bg=}
+\setbeamercolor{institute}{fg=black,bg=}
+\setbeamercolor{author}{fg=mydarkblue,bg=}
+
+% Custom styles
+\setbeamerfont{block title}{size=\large\bfseries}
+\setbeamerfont{block body}{size=\normalsize}
+\setbeamertemplate{itemize items}[triangle]
+\setbeamertemplate{navigation symbols}{}
+
+% Custom block style
+\setbeamertemplate{block begin}{
+    \begin{beamercolorbox}[rounded=true,shadow=true]{block title}
+        \usebeamerfont{block title}\insertblocktitle
+    \end{beamercolorbox}
+    \begin{beamercolorbox}[rounded=true,shadow=true]{block body}
+        \usebeamerfont{block body}\justifying
+}
+\setbeamertemplate{block end}{
+    \end{beamercolorbox}
+}
+
+% Adjust margins and spacing
+\geometry{a2paper,portrait,margin=1cm}
+\setlength{\columnsep}{2cm}
+
+\title{\titlefont FPGA Innovation Design Contest\\[0.5cm] \subtitlefont OpenRV 5-Stage Pipeline SoC System}
+\author{\large\textbf{Team Name} \\ \normalsize University \\ \normalsize Supervisor}
+\institute{\large 2025 National College Student\\ Embedded Chip and System Design Competition}
+\date{\large November 2025}
+
+\begin{document}
+
+% Custom title page
+\begin{frame}[t]
+\begin{tikzpicture}[remember picture,overlay]
+    \fill[myblue!10] (current page.north west) rectangle (current page.south east);
+    \draw[myblue,line width=2pt] (current page.north west) rectangle (current page.south east);
+\end{tikzpicture}
+
+% Title block with custom styling
+\begingroup
+\centering
+\vspace*{1cm}
+{\usebeamercolor[fg]{title}\inserttitle\par}
+\vspace*{0.5cm}
+{\usebeamercolor[fg]{author}\insertauthor\par}
+\vspace*{0.3cm}
+{\usebeamercolor[fg]{institute}\insertinstitute\par}
+\vspace*{0.3cm}
+{\usebeamercolor[fg]{date}\insertdate\par}
+\endgroup
+\vspace*{0.5cm}
+
+% Upper section: Three columns
+\begin{columns}[t]
+  \begin{column}{0.32\textwidth}
+    \begin{block}{\large Project Overview}
+      \begin{itemize}[leftmargin=*,itemsep=0.3em]
+        \item \textbf{Overview:} Lightweight RISC-V soft core for programmable control and rapid prototyping
+        \item \textbf{Architecture:} Harvard architecture with dual AHB-Lite ports
+        \item \textbf{Application:} Embedded control, sensor interfacing, hardware acceleration
+      \end{itemize}
+    \end{block}
+  \end{column}
+  \begin{column}{0.32\textwidth}
+    \begin{block}{\large Key Innovations}
+      \begin{itemize}[leftmargin=*,itemsep=0.3em]
+        \item Software + CPU control plane design
+        \item Plug-and-play AHB peripheral integration
+        \item Flexible state machine management
+        \item Unified bus protocol interface
+      \end{itemize}
+    \end{block}
+  \end{column}
+  \begin{column}{0.32\textwidth}
+    \begin{block}{\large Technical Specs}
+      \begin{center}
+        \begin{tabular}{ll}
+          \textbf{ISA:} & RV32I Base Integer \\
+          \textbf{Pipeline:} & 5-stage \\
+          \textbf{Interface:} & Dual AHB-Lite \\
+          \textbf{Platform:} & Artix-7 FPGA
+        \end{tabular}
+      \end{center}
+    \end{block}
+  \end{column}
+\end{columns}
+
+\vspace{0.5cm}
+% Middle section: Two columns
+  \begin{columns}[t]
+  \begin{column}{0.48\textwidth}
+    % Left column
+    \begin{block}{\large Core Architecture}
+      \begin{itemize}[leftmargin=*,itemsep=0.3em]
+        \item \textbf{Pipeline Design:}
+          \begin{itemize}[itemsep=0.2em]
+            \item Five-stage RISC-V pipeline with forwarding
+            \item Load-Use hazard detection and resolution
+            \item Branch prediction and resolution logic
+            \item Full RV32I instruction support
+          \end{itemize}
+        \item \textbf{Memory System:}
+          \begin{itemize}[itemsep=0.2em]
+            \item Separate instruction/data AHB ports
+            \item Byte/halfword/word memory access
+            \item IROM/BRAM controllers with AHB bridge
+          \end{itemize}
+      \end{itemize}
+    \end{block}
+
+    \begin{block}{\large System Integration}
+      \centering
+      \fbox{\parbox{0.9\textwidth}{\centering
+        \textcolor{myaccent}{\large [Block Diagram]}\\
+        \small Place the top-level architecture diagram from report section 2.2.1
+      }}
+      \vspace{0.3cm}
+      \begin{itemize}[leftmargin=*,itemsep=0.3em]
+        \item Layered design with core and bus interconnect
+        \item Standard AHB-Lite protocol for all peripherals
+        \item Configurable address mapping and decoding
+      \end{itemize}
+    \end{block}
+  \end{column}
+
+  \begin{column}{0.48\textwidth}
+    \begin{block}{\large Peripheral Integration}
+      \centering
+      \fbox{\parbox{0.9\textwidth}{\centering
+        \textcolor{myaccent}{\large [Peripheral Interface]}\\
+        \small Place the AHB peripheral connection diagram here
+      }}
+      \vspace{0.3cm}
+      \begin{itemize}[leftmargin=*,itemsep=0.3em]
+        \item \textbf{Basic Peripherals:}
+          \begin{itemize}[itemsep=0.2em]
+            \item Configurable PLL clock management
+            \item 5-button input with debouncing
+            \item 16 LEDs + 2 RGB LEDs
+            \item 8-digit seven-segment display
+            \item UART (9600 baud) for debugging
+          \end{itemize}
+      \end{itemize}
+    \end{block}
+
+    \begin{block}{\large Verification \& Results}
+      \begin{itemize}[leftmargin=*,itemsep=0.3em]
+        \item \textbf{Hardware Verification:}
+          \begin{itemize}[itemsep=0.2em]
+            \item RISC-V compliance test suite passed
+            \item Custom tests for peripherals
+            \item Real-world control applications
+          \end{itemize}
+        \item \textbf{Performance:}
+          \begin{itemize}[itemsep=0.2em]
+            \item Target frequency: 50-100 MHz
+            \item CPI ≈ 1 (ideal pipeline throughput)
+            \item Single-cycle memory access
+          \end{itemize}
+      \end{itemize}
+    \end{block}
+  \end{column}
+\end{columns}
+
+\vspace{0.5cm}
+% Bottom section: Three columns
+\begin{columns}[t]
+  \begin{column}{0.32\textwidth}
+    \begin{block}{\large Project Value}
+      \begin{itemize}[leftmargin=*,itemsep=0.3em]
+        \item \textbf{Engineering Practicality:} Programmable controller for peripherals/accelerators
+        \item \textbf{Easy Integration:} Standardized AHB-Lite interface
+        \item \textbf{Rapid Prototyping:} Quick IP integration and software driver reuse
+        \item \textbf{Educational Value:} Teaching platform for HW/SW co-design
+      \end{itemize}
+    \end{block}
+  \end{column}
+  
+  \begin{column}{0.32\textwidth}
+    \begin{block}{\large Future Directions}
+      \begin{itemize}[leftmargin=*,itemsep=0.3em]
+        \item RV32M extension implementation
+        \item Cache hierarchy enhancement
+        \item Advanced branch prediction
+        \item DMA and interrupt controller
+        \item Additional peripheral support
+      \end{itemize}
+    \end{block}
+  \end{column}
+
+  \begin{column}{0.32\textwidth}
+    \begin{block}{\large Contact \& Resources}
+      \begin{center}
+        \begin{tabular}{l}
+          \textbf{Repository:} github.com/Narwhal-Wu/LibreCore \\
+          \textbf{Documentation:} Project Wiki \& API Reference \\
+          \textbf{Development:} Vivado 2023.2
+        \end{tabular}
+      \end{center}
+    \end{block}
+  \end{column}
+\end{columns}
+
+\end{frame}
+\end{document}
