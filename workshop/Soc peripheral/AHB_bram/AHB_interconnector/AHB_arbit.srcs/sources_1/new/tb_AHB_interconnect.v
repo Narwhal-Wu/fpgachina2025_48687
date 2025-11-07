@@ -167,7 +167,7 @@ module tb_AHB_interconnect ();
             HADDR  <= 32'h0000_0000; // Access BRAM
             HWRITE <= 0;
             HSIZE  <= 3'b010; // Word size
-            HWDATA <= 32'h1111_eeee;
+            HWDATA <= 32'h0123_4567;
         end
 
         @(posedge HCLK) begin
@@ -178,16 +178,45 @@ module tb_AHB_interconnect ();
         end
 
         @(posedge HCLK) begin
+            HADDR  <= 32'h0000_0008;
+            HWRITE <= 1;
+            HSIZE  <= 3'd0;
+            HWDATA <= 32'h89ab_cdef;
+        end
+
+
+        @(posedge HCLK) begin
             HADDR  <= 32'h0000_000C;
             HWRITE <= 0;
+            HSIZE  <= 3'd2;
+            HWDATA <= 32'hfedc_ba98;
+        end
+
+        @(posedge HCLK) begin
+            HADDR  <= 32'h0000_0008;
+            HWRITE <= 0;
+            HSIZE  <= 3'd2;
+            HWDATA <= 32'hcafe_babe;
+        end
+
+        @(posedge HCLK) begin
+            HADDR  <= 32'h0000_0000;
+            HWRITE <= 0;
             HSIZE  <= 3'd1;
-            HWDATA <= 32'h2222_bbbb;
+            HWDATA <= 32'hcafe_babe;
+        end
+
+        @(posedge HCLK) begin
+            HADDR  <= 32'h0000_0000;
+            HWRITE <= 0;
+            HSIZE  <= 3'd0;
+            HWDATA <= 32'hcafe_babe;
         end
 
 
 
         @(posedge HCLK) begin
-            HADDR  <= 32'h4000_0000; // Access BRAM
+            HADDR  <= 32'h4000_0000; // Access IROM
             HWRITE <= 0;
             HSIZE  <= 3'd2; // Word size
         end
@@ -201,13 +230,18 @@ module tb_AHB_interconnect ();
         @(posedge HCLK) begin
             HADDR  <= 32'h4000_0004; // Access IROM
             HWRITE <= 0;
+            HSIZE  <= 3'd0; // Word size
+        end
+
+        @(posedge HCLK) begin
+            HADDR  <= 32'h4000_0008; // Access IROM
+            HWRITE <= 0;
             HSIZE  <= 3'd2; // Word size
         end
 
         @(posedge HCLK) begin
-            HADDR  <= 32'h0000_0000; // Access IROM
+            HADDR  <= 32'h4000_000C; // Access IROM
             HWRITE <= 0;
-            HTRANS <= 2'b00;
             HSIZE  <= 3'd2; // Word size
         end
 
